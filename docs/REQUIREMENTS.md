@@ -19,7 +19,7 @@ Ta lista pochodzi z udostępnionych zasad oceniania. **Wszystkie elementy mają 
 | 11 | Złożoność bazy danych | TODO |
 | 12 | Eksport bazy do pliku .sql | TODO |
 | 13 | PHP | TODO |
-| 14 | Python | TODO |
+| 14 | JavaScript | TODO |
 | 15 | Fetch API (AJAX) | TODO |
 | 16 | Design | TODO |
 | 17 | Responsywność | TODO |

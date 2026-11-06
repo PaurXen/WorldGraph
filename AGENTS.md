@@ -3,7 +3,7 @@
 Wskazówki dla agenta programistycznego pracującego nad tym repozytorium.
 
 ## Zakres pracy
-- Najpierw zapoznaj się z `PROJECT.md`, `ARCHITECTURE.md` i `docs/REQUIREMENTS.md`.
+- Najpierw zapoznaj się z `PROJECT.md`, `ARCHITECTURE.md`, `TODO.md` i `docs/REQUIREMENTS.md`.
 - Implementuj wyłącznie funkcjonalność wyraźnie zleconą przez użytkownika. Nie buduj całego projektu na podstawie samej prośby o plan lub strukturę.
 - Nie dodawaj zależności, kontenerów, schematów SQL, endpointów ani klas „na zapas”.
 - Przed większą zmianą zaproponuj zakres i listę plików, których dotknie.
