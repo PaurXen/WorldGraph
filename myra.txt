@@ -1,0 +1,97 @@
+CLFR/MYRA
+
+0. MAIN_LORE 
+> +'direction'- contains the main direction of the story
+> +'goals[]' - goals that drive the story
+> +'themes[]' - themes of the story
+> +'other[]' - other details for lore
+
+1. MYRA_LIST
+> +'id' - id of character(cx)/c_id, location(lx)/l_id, faction(fx)/f_id, race(rx)/r_id
+> +'name' - name of the 'MYRA' element (not unique)
+> +'fate_name' - a unique name almost equal to id
+> +'aliases[]' - other names of 'MYRA' element (alias, by who or what)
+> +'characteristics' - description of 'MYRA' elements like looks of the character and personality, description of structures in the city, insides of the building, etc. 
+> +'descriptions' - details like the story of the MYRA element and other details that don't fit in characteristics
+> +'goals' - goals of MYRA element
+
+2. EVENTS_LIST
+> +'e_id' - event id(ex)
+> +'description' - description, goals, events, conclusion and effect of the event (summarized version of important events and details)
+> +'MYRA[]' - elements of 'MYRA_LIST' included in the event
+> +'emotions' - emotions that drives characters from 'MYRA[]' (c_id, emotions)
+> +'impact' - impact on the main storyline and probability of convergence  <0-10>(0 - main storyline, 2 - big impact and high probability of convergence, 5 - average impact and the possibility of convergence, 8 -  minimal impact and unprobeable to converge, 10 - no impact and irrelevant)
+> +'timeframe' - duration of the events <0-10>(0 - irrelevant, 1 - hours, 2 - days, 3 - weeks, 4 - months, 5 -  years, 6 - decades, 7 - centuries, 8 - millennia, 9 - at the end of everything, 10 - undetermined )
+> +'time' - description of time passages in the text
+> +'status' - status of event (active, paused, finished)
+
+3. DIALOGUES_LIST
+> +'e_id' - event that dialog takes place in
+> +'d_n' - number of dialogue for chronology 
+> +'MYRA[]' - characters from 'MYRA_LIST' that take part in dialogue
+> +'content' - summarized version of the dialogue with details
+> +'emotions[]' - emotions that drives characters (c_id, emotions)
+
+4. DETILES_LIST 
+> +'elements[]' - elements that are influence by detail (MYRA, EVENTS)(cx, lx, fx, rx, ex)
+> +'detail' - description of detail that doesn't fit in other Lists
+5. UPDATE_LIST
+> +'elements[n*[]]' - contains records of all 'n' past changes in data as a list of (operation, change). operation: delete (delete, deleted element), changed (changed, element before change), add (add, added element) 
+
+6. CURRENT_EVENT
+> +'e_id' - id for current event
+> +'MYRA[]' - elements of 'MYRA_LIST' that are included in event
+> +'impact' - impact on the main storyline and probability of convergence  <0-10>(0 - main storyline, 2 - big impact and high probability of convergence, 5 - average impact and the possibility of convergence, 8 -  minimal impact and unprobeable to converge, 10 - no impact and irrelevant)
+> +'description' - basic description of event  
+> +'updates[]' - updates and progression of changes in the event
+> +'emotions' - emotions that drives characters (c_id, emotions)
+> +'timeframe' - duration of the events <0-10>(0 - irrelevant, 1 - hours, 2 - days, 3 - weeks, 4 - months, 5 -  years, 6 - decades, 7 - centuries, 8 - millennia, 9 - at the end of everything, 10 - undetermined )
+> +'status' - status of the event (active, paused, ready to commit)
+
+7. CURRENT_DIALOGUE
+> +'e_id' - event id that dialog takes place
+> +'MYRA[]' - characters from 'MYRA_LIST' that take part in dialogue
+> +'updates[]' - the flow of the conversation (who is talking, what is he talking) 
+> +'emotions' - emotions that drives characters (c_id, emotions)
+> +'status' - status of the dialogue(active, paused, ready to commit)
+
+8. FATE_GRAPH
+> NODE:
+>> +'c_id' - id from 'MYRA_LIST' character (cx)
+>> +'impact' - impact on the main story <0-10> (0 - is the story, 1 - fate is entangled with them, 5 - normal impact, 9 - very minor impact, 10 - irrelevant)
+
+> EADGES
+>> +'c_id_s' - id from 'MYRA_LIST' character (cx) source
+>> +'c_id_t' - id from 'MYRA_LIST' character (cx) target
+>> +'weight' - weight and influence on targets story/fate <0-10> (0 - the same entity, 1 - entangled fates, 3 - big influence, 5 - normal, 8 - week influence, 10 - irrelevant(this connection should exist only in special cases))
+
+9. LOCATIONES_GRAPH
+> NODE
+>> +'l_id' - id from 'MYRA_LIST' location (lx) 
+>> +'coordinates' - coordinates on the grid (x, y) for representation of the map
+> EADGES
+>> +'l_id_s' - id from 'MYRA_LIST' location (lx) source
+>> +'l_id_t' - id from 'MYRA_LIST' location (lx) target
+>> +'relevance' - relevance between locations
+>> +'root_dist' - root distance between locations
+>> +'tarain' - terrain that divides locations
+>> +'mov_cost' - cost of movement in environment <0-2> (it's a multiplier)
+>> +'description' - short description of connection like root and their connections
+>> +'history' - records past encounters (e_id/none, description)
+
+10. RELETIONSHIPS_GRAPH
+> NODE
+>> +'id' - id from 'MYRA_LIST' (cx/lx/fx/rx)
+> EADGES
+>> +'id_s' - id from 'MYRA_LIST' (cx/lx/fx/rx) source
+>> +'id_t' - id from 'MYRA_LIST' (cx/lx/fx/rx) target
+>> +'weight' - strength of the relationship and connection <0-10> (0 - same thing, 1 - insertable, 3 - strong, 5 - normal, 8 - week, 9 - barely any, 10 - none(this connection should exist only in special cases))
+>> +'type' - a type of the relationship (short like allies, enemies, at war, trade, etc.)
+>> +'description' - more detailed relationship if necessary
+
+11. EVENTE_GRAPH
+> NODE
+>> +'e_id' - id from 'EVENTS_LIST' (ex)
+> EADGES
+>> +'e_id_s' - id from 'EVENTS_LIST' (ex) source
+>> +'e_id_t' - id from 'EVENTS_LIST' (ex) target

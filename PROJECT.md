@@ -1,6 +1,6 @@
 # PROJECT.md — WorldGraph
 
-> Dokument zatwierdzonego celu i zakresu MVP w wariancie B, ustalonego w punkcie 0.2 TODO. Opisuje plan produktu; aktualny stan implementacji przedstawia README.md.
+> Dokument zatwierdzonego celu i zakresu MVP w wariancie B (punkt 0.2 TODO) oraz mapy stron (punkt 0.3 TODO). Opisuje plan produktu; aktualny stan implementacji przedstawia README.md.
 
 ## Problem
 Twórcy rozbudowanych uniwersów przechowują informacje o postaciach, miejscach, frakcjach i fabule w wielu notatkach. Utrudnia to porządkowanie wiedzy, odnajdywanie powiązań i planowanie dalszego przebiegu historii. Współpraca wymaga również jasnego określenia, kto może przeglądać i edytować materiały.
@@ -36,6 +36,54 @@ Pierwsza użyteczna wersja to encyklopedia świata z interaktywnym grafem, wspó
 6. **Publikacja i Odkrywaj:** publikowanie i cofanie publikacji całego świata, katalog publicznych światów z wyszukiwaniem, filtrowaniem i sortowaniem oraz odczyt opublikowanej zawartości przez gościa.
 
 Karta jest zapisana raz. Encyklopedia, listy i graf prezentują te same dane, a zmiany są widoczne w odpowiednich widokach. Dopuszczalność zewnętrznej biblioteki grafowej wymaga wyjaśnienia w punkcie 0.11 TODO; wybór technologii nastąpi w punkcie 7.1.
+
+## Strony i nawigacja
+
+Ustalenia punktu 0.3 obejmują siedem głównych stron i pomocniczy ekran tworzenia świata. Adresy poniżej określają plan nawigacji do wykorzystania przy implementacji routingu i poszczególnych modułów.
+
+### Mapa stron
+
+| Strona | Planowany adres | Cel, zawartość i główne działania | Dostęp |
+|---|---|---|---|
+| **Odkrywaj — strona główna** | `/` | Katalog publicznych światów: okładka, tytuł, autor, opis i tagi; wyszukiwanie, filtrowanie, sortowanie i stronicowanie. Wybranie świata otwiera jego projekt. | Każdy, również bez konta; katalog zawiera wyłącznie opublikowane światy. |
+| **Logowanie** | `/login` | Formularz logowania, komunikaty walidacji i odnośnik do rejestracji. Po powodzeniu przejście do biblioteki lub wcześniej żądanej strony zgodnie z zasadami powrotu poniżej. | Osoba niezalogowana; zalogowany użytkownik przechodzi do biblioteki. |
+| **Rejestracja** | `/register` | Formularz utworzenia konta, komunikaty walidacji i odnośnik do logowania. Po utworzeniu konta przejście do logowania. | Osoba niezalogowana; zalogowany użytkownik przechodzi do biblioteki. |
+| **Biblioteka** | `/library` | Własne i udostępnione światy z informacją o roli użytkownika. Otwieranie projektu i przycisk „Utwórz świat”. Pusta biblioteka zachęca do utworzenia pierwszego świata. | Zalogowany użytkownik; widzi tylko światy własne i te, do których otrzymał dostęp. |
+| **Otwarty projekt** | `/worlds/{id}` | Przestrzeń wybranego świata: opis, karty i graf tych samych danych. Przeglądanie zawartości oraz działania edycyjne zgodne z rolą; właściciel może przejść do ustawień projektu. | Publiczny świat: każdy. Prywatny świat: właściciel i użytkownicy z nadanym dostępem. Edycja: właściciel i redaktorzy. |
+| **Ustawienia projektu** | `/worlds/{id}/settings` | Osobna strona edycji podstawowych informacji o świecie, zarządzania dostępem współpracowników, publikacji i cofania publikacji oraz usuwania świata z potwierdzeniem. Powrót do otwartego projektu. | Właściciel danego świata. |
+| **Ustawienia konta** | `/account/settings` | Osobna strona zmiany nazwy wyświetlanej i hasła po weryfikacji obecnego hasła; komunikaty walidacji i wyniku zapisu. Powrót do biblioteki. | Zalogowany użytkownik, wyłącznie dla własnego konta. |
+| **Tworzenie świata — ekran pomocniczy** | `/worlds/new` | Osobny formularz otwierany z biblioteki. Po zapisaniu powstaje prywatny świat należący do twórcy i otwiera się jego projekt; anulowanie prowadzi do biblioteki. | Zalogowany użytkownik. |
+
+`{id}` oznacza identyfikator wybranego świata. Ścieżka `/worlds/new` oznacza formularz tworzenia i musi być rozróżniana przez router od adresu istniejącego świata.
+
+### Wspólna nawigacja i widok projektu
+
+- Logo WorldGraph prowadzi do Odkrywaj. W MVP Odkrywaj pełni rolę strony głównej; obecny szablon demonstracyjny jest punktem wyjścia do późniejszej implementacji.
+- Osoba niezalogowana ma w głównej nawigacji odnośniki „Odkrywaj”, „Zaloguj się” i „Zarejestruj się”.
+- Zalogowany użytkownik ma odnośniki „Odkrywaj”, „Biblioteka” i „Ustawienia konta” oraz akcję „Wyloguj”. Wylogowanie kończy sesję i prowadzi do Odkrywaj; nie wymaga osobnej strony.
+- Publiczny i prywatny świat korzystają ze wspólnego widoku projektu pod tym samym adresem. Zakres dostępu i dostępność działań edycyjnych wynikają z roli użytkownika w tym świecie.
+- Ustawienia projektu są osobną stroną dostępną z projektu dla właściciela. Redaktorzy edytują zawartość w odpowiednich widokach projektu; czytelnicy i goście przeglądają ją bez działań edycyjnych.
+- Biblioteka i Odkrywaj prowadzą do tego samego projektu. Z projektu można przejść do Odkrywaj, a po zalogowaniu również do biblioteki.
+
+### Podstawowe przejścia
+
+1. **Pierwsze użycie:** Odkrywaj → rejestracja → logowanie → biblioteka → tworzenie świata → prywatny projekt.
+2. **Powrót do pracy:** logowanie → biblioteka → własny lub udostępniony projekt → przeglądanie albo edycja zgodnie z rolą.
+3. **Publikacja:** projekt → ustawienia projektu → publikacja → świat dostępny w Odkrywaj i pod bezpośrednim adresem projektu. Cofnięcie publikacji przywraca dostęp wyłącznie uprawnionym osobom.
+4. **Przeglądanie przez gościa:** Odkrywaj lub bezpośredni adres publicznego świata → projekt → jego zawartość w trybie odczytu.
+5. **Współpraca:** właściciel otwiera ustawienia projektu i nadaje istniejącemu użytkownikowi dostęp; świat pojawia się w bibliotece tego użytkownika z przypisaną rolą. Zaproszenia e-mail pozostają rozszerzeniem po MVP.
+
+Po zwykłym logowaniu użytkownik trafia do biblioteki. Jeśli logowanie zostało wywołane próbą otwarcia strony wymagającej konta, po powodzeniu wraca do tej strony, o ile adres jest bezpieczną ścieżką wewnątrz aplikacji i użytkownik ma wymagane uprawnienia. Cel powrotu należy zachować również przy przejściu przez rejestrację; przy niepoprawnym lub niedostępnym celu powrót prowadzi do biblioteki.
+
+Próba wejścia na stronę wymagającą konta przez osobę niezalogowaną prowadzi do logowania bez ujawniania chronionej zawartości. Brak uprawnień po zalogowaniu uniemożliwia odczyt i edycję danych. Serwer sprawdza dostęp także przy bezpośrednich żądaniach, niezależnie od widoczności odnośników.
+
+Gdy nie ma publicznych światów, Odkrywaj pokazuje komunikat o pustym katalogu. Brak dostępu i nieistniejące adresy wymagają kontrolowanej odpowiedzi; obsługa błędów i statusów HTTP należy do implementacji szkieletu aplikacji w etapie 1.
+
+### Granice ustaleń 0.3
+
+Mapa określa strony, ich cele, podstawowy dostęp, działania i przejścia. Zakładki wewnątrz projektu zostaną doprecyzowane w 0.4, pełna macierz uprawnień w 0.7, a szczegółowe pola kart i zasady relacji w 0.8. Widoki szczegółów i edycji kart zostaną rozwinięte wraz z tymi ustaleniami i etapem 5. Wydarzenia i spójność pozostają poza MVP zgodnie z zakresem 0.2.
+
+Ukończenie 0.3 oznacza zapisanie i sprawdzenie tej mapy. Implementacja stron, formularzy i routingu jest realizowana w odpowiednich etapach TODO.
 
 ## Odniesienie do szkicu MYRA
 
