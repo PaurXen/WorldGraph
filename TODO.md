@@ -28,9 +28,9 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 - [x] 0.1 Popraw kryterium nr 14 w docs/REQUIREMENTS.md: Python → JavaScript; zachowaj odnośnik do źródła.
 - [x] 0.2 Zatwierdź MVP i listę funkcji odłożonych; zaktualizuj PROJECT.md.
 - [x] 0.3 Ustal strony: Odkrywaj, logowanie, rejestracja, biblioteka, otwarty projekt, ustawienia projektu i konta. Ustalenia: [PROJECT.md — Strony i nawigacja](PROJECT.md#strony-i-nawigacja).
-- [ ] 0.4 Ustal zakładki projektu: O świecie, Graf, Karty, Wydarzenia, Spójność.
-- [ ] 0.5 ~~Przygotuj prototyp minimum 5 istotnych ekranów w wariancie mobilnym i desktopowym oraz eksport PDF.~~
-- [ ] 0.6 Ustal model pojęciowy: User, World, WorldMember, Entity, Relationship, Event i uczestnicy wydarzenia.
+- [x] 0.4 Ustal zakładki projektu: O świecie, Graf, Karty, Wydarzenia, Spójność.
+- [?] 0.5 Przygotuj prototyp minimum 5 istotnych ekranów w wariancie mobilnym i desktopowym ~~oraz eksport PDF~~.
+- [x] 0.6 Ustal model pojęciowy: User, World, WorldMember, Entity, Relationship, Event i uczestnicy wydarzenia.
 - [ ] 0.7 Rozpisz macierz uprawnień gościa, właściciela, redaktora i czytelnika.
 - [ ] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych.
 - [ ] 0.9 Uzupełnij AGENTS.md o zasady Git, granice warstw, weryfikację i warunki ukończenia zadania.
@@ -139,14 +139,14 @@ Zależność: etap 6 oraz rozstrzygnięcie 0.11.
 
 - [ ] 7.1 Zapisz wybór technologii renderowania i jej ograniczenia.
 - [ ] 7.2 Dodaj endpoint węzłów i krawędzi z kontrolą dostępu oraz ograniczeniem wielkości odpowiedzi.
-- [ ] 7.3 Wyświetl graf istniejących kart i relacji.
+- [ ] 7.3 Wyświetl graf istniejących kart i relacji w widokach Relacje, Lokacje i Los — wpływ postaci (FATE_GRAPH).
 - [ ] 7.4 Dodaj przesuwanie i przybliżanie.
 - [ ] 7.5 Otwieraj kartę po zaznaczeniu węzła i opis relacji po wybraniu krawędzi.
 - [ ] 7.6 Dodaj filtry typów, wyszukiwanie i widok bezpośrednich sąsiadów karty.
 - [ ] 7.7 Zapewnij użyteczny wariant mobilny i alternatywną listę obsługiwaną klawiaturą.
-- [ ] 7.8 Sprawdź pusty graf, pojedynczą kartę i reprezentatywny większy zbiór.
+- [ ] 7.8 Sprawdź pusty graf, pojedynczą kartę i reprezentatywny większy zbiór w każdym widoku; w FATE_GRAPH sprawdź także kierunek i opis wpływu postaci na inne postacie i ich działania.
 
-**Warunek ukończenia:** graf jest interaktywnym widokiem tych samych danych co encyklopedia. Tworzenie połączeń przeciąganiem i zapis własnych układów nie należą do tego etapu.
+**Warunek ukończenia:** widoki Relacje, Lokacje i Los — wpływ postaci (FATE_GRAPH) są interaktywnymi widokami danych świata. Grafy i encyklopedia korzystają z tych samych kart i powiązań. FATE_GRAPH przedstawia kierunkowy wpływ postaci na inne postacie i ich działania; jest częścią podstawowego MVP etapów 1–9, niezależną od analizy spójności w etapie 10. Tworzenie połączeń przeciąganiem i zapis własnych układów nie należą do tego etapu.
 
 ## 8. Publiczne światy i Odkrywaj
 
@@ -231,7 +231,7 @@ Zależność: etapy 0–11.
 Poniższa lista nie stanowi zlecenia implementacji:
 
 - sceny i dialogi MYRA;
-- graf losu i liczbowe miary wpływu;
+- uniwersalne wagi relacji 0–10;
 - mapa z terenem, odległościami i kosztami podróży;
 - zaawansowane kalendarze fikcyjne;
 - pełna historia wersji i przywracanie danych;
