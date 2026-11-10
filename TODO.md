@@ -1,6 +1,6 @@
 # TODO — WorldGraph
 
-Plan implementacji, wersja 2026-11-06.
+Plan implementacji, wersja 2026-11-10.
 
 ## Zasady pracy
 
@@ -17,9 +17,9 @@ Plan implementacji, wersja 2026-11-06.
 
 WorldGraph służy do organizacji wiedzy o fikcyjnych światach: kart, relacji, wydarzeń i chronologii. Jeden projekt świata przechowuje dane, a graf i lista są sposobami ich prezentacji. Ta sama karta nie jest kopiowana dla różnych widoków grafu.
 
-Podstawowy proces: konto → prywatny świat → karty → relacje → graf → publikacja → przeglądanie przez gościa. Następnie wydarzenia, kontrola spójności i zaproszenia.
+Podstawowy proces MVP: konto → prywatny świat → współpraca i komentarze → karty → relacje i wpływ postaci → graf → ustawienie prywatności → przeglądanie przez gościa → wydarzenia i chronologia. Każda udana zmiana danych i plików świata jest zapisywana w historii wersji. Kontrola spójności i zaproszenia e-mail pozostają dalszymi etapami.
 
-Nowy projekt jest prywatny. W pierwszej wersji publikacja obejmuje całą zawartość świata. Role w świecie: właściciel, redaktor, czytelnik. Szczegóły modelu pozostają do zatwierdzenia w etapie 0.
+Nowy projekt jest prywatny. Poziomy prywatności: publiczny — Gość odczytuje aktualną zawartość świata, ograniczony — Gość odczytuje tylko „O świecie”, prywatny — Gość nie ma dostępu. Gość oznacza brak przydzielonej roli, także po zalogowaniu. Publiczne komentowanie wymaga konta, ale nie członkostwa. Role członków: jeden Twórca, zero lub więcej Właścicieli, Redaktor, Czytelnik i Custom; zakres oraz macierz określa PROJECT.md. Historia nie staje się publiczna wraz z bieżącą zawartością.
 
 Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 2026-11-06. Istnieją dokumentacja, szkielet katalogów, konfiguracja Docker Compose i statyczna strona HTML/CSS. Nie traktuj tego opisu jako bieżącej weryfikacji repozytorium; przed edycją sprawdź aktualne pliki. Poniższe checkboxy dotyczą zaplanowanych prac i nie oznaczają, że wszystkie istniejące elementy trzeba budować ponownie.
 
@@ -31,8 +31,8 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 - [x] 0.4 Ustal zakładki projektu: O świecie, Graf, Karty, Wydarzenia, Spójność.
 - [?] 0.5 Przygotuj prototyp minimum 5 istotnych ekranów w wariancie mobilnym i desktopowym ~~oraz eksport PDF~~.
 - [x] 0.6 Ustal model pojęciowy: User, World, WorldMember, Entity, Relationship, Event i uczestnicy wydarzenia.
-- [ ] 0.7 Rozpisz macierz uprawnień gościa, właściciela, redaktora i czytelnika.
-- [ ] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych.
+- [x] 0.7 Rozpisz macierz uprawnień Gościa, Czytelnika, Redaktora, Właściciela, Twórcy i Custom oraz trzy poziomy prywatności; uwzględnij komentarze i historię zmian w MVP. Ustalenia: [PROJECT.md — Role, prywatność i uprawnienia](PROJECT.md#role-prywatność-i-uprawnienia--ustalenia-07).
+- [ ] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych, w tym retencję historii i historycznych plików po usunięciu świata; nie usuwaj zapisu usunięcia świata przez nieuzgodnioną kaskadę.
 - [ ] 0.9 Uzupełnij AGENTS.md o zasady Git, granice warstw, weryfikację i warunki ukończenia zadania.
 - [ ] 0.10 Rozszerz checklistę kryteriów o warunki akceptacji, status i dowód realizacji.
 - [ ] 0.11 Wyjaśnij dopuszczalność zewnętrznej biblioteki grafowej przed jej wyborem.
@@ -90,16 +90,25 @@ Zależność: etap 2.
 
 Zależność: etap 3.
 
-- [ ] 4.1 Dodaj świat i członkostwo z rolą; zaktualizuj ERD.
-- [ ] 4.2 Utwórz świat wraz z członkostwem właściciela w jednej transakcji.
+Przed pierwszym zapisem świata w 4.2 przygotuj model historii z 4.9 i wspólny zapis z 4.10. Kolejne moduły mają korzystać z niego od pierwszej operacji zmieniającej dane; historia należy do podstawowego MVP etapów 1–9.
+
+- [ ] 4.1 Dodaj świat, członkostwo i role `creator`, `owner`, `editor`, `reader`, `custom`; zaktualizuj ERD. Każdy świat ma dokładnie jednego Twórcę i może mieć wielu Właścicieli.
+- [ ] 4.2 Utwórz prywatny świat wraz z członkostwem Twórcy i pierwszym zestawem historii zmian w jednym logicznym zapisie.
 - [ ] 4.3 Dodaj bibliotekę własnych i udostępnionych światów oraz stan pustej biblioteki.
 - [ ] 4.4 Dodaj otwieranie projektu i zakładkę O świecie.
-- [ ] 4.5 Dodaj edycję nazwy, opisu, tematów i założeń świata.
-- [ ] 4.6 Dodaj nadawanie dostępu istniejącym użytkownikom, zmianę roli i odebranie dostępu przez właściciela.
-- [ ] 4.7 Dodaj kontrolowane usuwanie świata z potwierdzeniem i ustaloną polityką zależnych danych.
-- [ ] 4.8 Zweryfikuj role na oddzielnych kontach i bezpośrednich żądaniach HTTP; chroń rolę właściciela.
+- [ ] 4.5 Dodaj edycję informacji i treści „O świecie” zgodnie z osobnymi uprawnieniami do treści oraz ustawień projektu.
+- [ ] 4.6 Dodaj nadawanie dostępu istniejącym użytkownikom, zmianę roli i odebranie dostępu zgodnie z macierzą. Tylko Twórca może nadać rolę Właściciela; zwykłe zarządzanie członkami nie może zmienić ani usunąć Twórcy.
+- [ ] 4.7 Dodaj usuwanie świata wyłącznie przez Twórcę, z potwierdzeniem, wpisem historii i polityką zależnych danych oraz retencji uzgodnioną w 0.8.
+- [ ] 4.8 Zweryfikuj role na oddzielnych kontach i bezpośrednich żądaniach HTTP: ochronę Twórcy, zakaz nadawania roli Właściciela przez inne osoby oraz brak samodzielnego rozszerzania uprawnień. Redaktor może usuwać także cudzą zawartość; każda taka zmiana podlega historii.
+- [ ] 4.9 Dodaj model historii: `ChangeSet` grupujący jedną operację jak commit oraz wpisy jej zmian. Zapisuj świat, identyfikator i poprzednią rewizję, wykonawcę, rzeczywisty czas UTC, operację, zmienione obiekty/pliki oraz stan przed/po lub różnicę pozwalającą odtworzyć obie wersje.
+- [ ] 4.10 Połącz każdą mutację świata z dopisaniem niezmiennej historii. Błąd zapisu historii ma wycofać zmianę; równoległe zapisy nie mogą gubić poprzedniej wersji. Obejmij członkostwo, role, Custom, ustawienia, prywatność i transfer Twórcy; kolejne moduły dołączają swoje dane do tego samego mechanizmu. Nie zapisuj haseł, tokenów, cookies ani sekretów środowiska.
+- [ ] 4.11 Dodaj przegląd zestawów zmian oraz odczyt i porównanie historycznych wersji. Domyślne `history.read` mają Twórca, Właściciel i Redaktor; Custom może otrzymać je jawnie. Gość i Czytelnik nie mają go domyślnie. Obecne prawa do danych źródłowych nadal obowiązują, a historia ustawień i członkostwa wymaga odpowiednich praw administracyjnych. Nie udostępniaj operacji edycji lub usuwania wpisów historii.
+- [ ] 4.12 Dodaj konfigurację Custom jako dodatnie uprawnienia obszar–operacja, bez jawnych zakazów i reguł dla pojedynczych kart. Uwzględnij minimum odczytu wynikające z prywatności, wymagane uprawnienia zależne i zakres administracyjny nadającego; uprawnienia zastrzeżone dla Twórcy nie podlegają delegowaniu.
+- [ ] 4.13 Dodaj atomowe przekazanie roli Twórcy istniejącemu Właścicielowi wyłącznie przez obecnego Twórcę. Poprzedni Twórca zostaje Właścicielem; zachowaj historyczną informację o pierwotnym twórcy i zapisz transfer w historii.
+- [ ] 4.14 Dodaj komentarze do świata i jego dostępnej zawartości: odczyt, dodawanie po zalogowaniu, edycję i usuwanie własnych komentarzy oraz moderację przez Właściciela i Twórcę lub Custom z odpowiednim uprawnieniem. Sprawdzaj dostęp do kontekstu komentarza i zapisuj utworzenie, edycję oraz usunięcie w historii.
+- [ ] 4.15 Sprawdź kompletność historii, porównanie wersji, brak mutacji po awarii jej zapisu, równoległe edycje, ochronę wpisów i brak sekretów. Zweryfikuj własne/cudze komentarze oraz odebranie praw także do historii i jej historycznych plików.
 
-**Warunek ukończenia:** użytkownicy widzą właściwe projekty i mają różne możliwości zgodnie z rolą. Projekty nadal są prywatne.
+**Warunek ukończenia:** użytkownicy widzą właściwe projekty i mają możliwości zgodne z macierzą, w tym Custom i komentarze. Twórca pozostaje chroniony, jego transfer działa atomowo, a jedynie on nadaje rolę Właściciela i usuwa świat. Każda udana mutacja ma niezmienny zestaw historii z porównaniem wersji i osobną kontrolą dostępu. Projekty na tym etapie są jeszcze prywatne; trzy poziomy udostępnienia wdraża etap 8.
 
 ## 5. Karty elementów świata
 
@@ -111,10 +120,10 @@ Zależność: etap 4.
 - [ ] 5.4 Rozszerz model o miejsca, frakcje, rasy/gatunki i artefakty oraz ich zatwierdzone pola.
 - [ ] 5.5 Dodaj tagi, wyszukiwanie, filtrowanie i stronicowanie.
 - [ ] 5.6 Dodaj usuwanie karty zgodne z ustaloną polityką zależności.
-- [ ] 5.7 Dodaj upload ilustracji: limit rozmiaru, rzeczywisty MIME, dozwolone rozszerzenie i unikalna nazwa.
-- [ ] 5.8 Zapewnij kontrolę dostępu do ilustracji prywatnego świata; w bazie przechowuj ścieżkę, nie plik.
+- [ ] 5.7 Dodaj upload ilustracji: limit rozmiaru, rzeczywisty MIME, dozwolone rozszerzenie i unikalna nazwa. Zamiana lub usunięcie ilustracji ma zachować jej poprzednie bajty i metadane do odczytu historycznej wersji, a nie tylko nazwę lub hash.
+- [ ] 5.8 Zapewnij kontrolę dostępu do bieżących i historycznych ilustracji zgodnie z prywatnością, uprawnieniami i kontekstem. W bazie przechowuj odwołania do niezmiennych wersji plików; zapis metadanych i historii oraz publikacja przygotowanych plików muszą dawać jeden logiczny wynik także przy awarii.
 - [ ] 5.9 Wykorzystaj mechanizm ilustracji również dla okładki świata.
-- [ ] 5.10 Sprawdź CRUD, walidację i izolację kart różnych światów.
+- [ ] 5.10 Sprawdź CRUD, walidację, izolację kart różnych światów oraz historię wszystkich zmian kart i plików, także cudzej zawartości usuwanej przez Redaktora. Zweryfikuj stare wersje po zamianie lub usunięciu ilustracji i awarię zapisu pliku/historii.
 
 **Warunek ukończenia:** działa encyklopedia świata bez konieczności używania grafu. Relacji takich jak przynależność do frakcji nie duplikujemy w osobnych polach kart.
 
@@ -129,7 +138,8 @@ Zależność: etap 5.
 - [ ] 6.5 Dodaj edycję i usuwanie relacji.
 - [ ] 6.6 Egzekwuj izolację światów w backendzie i odpowiednich ograniczeniach bazy.
 - [ ] 6.7 Dodaj Fetch GET i POST z JSON, obsługą statusów, ładowania, powodzenia i błędów.
-- [ ] 6.8 Sprawdź nieuprawnione operacje, nieistniejące karty i próby łączenia światów.
+- [ ] 6.8 Sprawdź nieuprawnione operacje, nieistniejące karty, próby łączenia światów oraz historię tworzenia, edycji i usuwania relacji.
+- [ ] 6.9 Dodaj tworzenie, odczyt, edycję i usuwanie kierunkowego wpływu postaci zgodnie z zapisem ustalonym w 0.8 oraz uprawnieniami `influences`; obejmij wszystkie zmiany historią. Nie narzucaj uniwersalnych wag 0–10.
 
 **Warunek ukończenia:** relacje działają jako lista na prawdziwych danych i można je tworzyć bez przeładowania strony. Uniwersalne wagi 0–10 pozostają poza MVP.
 
@@ -138,7 +148,7 @@ Zależność: etap 5.
 Zależność: etap 6 oraz rozstrzygnięcie 0.11.
 
 - [ ] 7.1 Zapisz wybór technologii renderowania i jej ograniczenia.
-- [ ] 7.2 Dodaj endpoint węzłów i krawędzi z kontrolą dostępu oraz ograniczeniem wielkości odpowiedzi.
+- [ ] 7.2 Dodaj endpoint węzłów i krawędzi z kontrolą dostępu oraz ograniczeniem wielkości odpowiedzi. Uprawnienie do grafu nie może ujawniać kart, relacji, wpływów ani wydarzeń, do których użytkownik nie ma odczytu.
 - [ ] 7.3 Wyświetl graf istniejących kart i relacji w widokach Relacje, Lokacje i Los — wpływ postaci (FATE_GRAPH).
 - [ ] 7.4 Dodaj przesuwanie i przybliżanie.
 - [ ] 7.5 Otwieraj kartę po zaznaczeniu węzła i opis relacji po wybraniu krawędzi.
@@ -148,18 +158,18 @@ Zależność: etap 6 oraz rozstrzygnięcie 0.11.
 
 **Warunek ukończenia:** widoki Relacje, Lokacje i Los — wpływ postaci (FATE_GRAPH) są interaktywnymi widokami danych świata. Grafy i encyklopedia korzystają z tych samych kart i powiązań. FATE_GRAPH przedstawia kierunkowy wpływ postaci na inne postacie i ich działania; jest częścią podstawowego MVP etapów 1–9, niezależną od analizy spójności w etapie 10. Tworzenie połączeń przeciąganiem i zapis własnych układów nie należą do tego etapu.
 
-## 8. Publiczne światy i Odkrywaj
+## 8. Prywatność, udostępnianie i Odkrywaj
 
 Zależność: etap 7.
 
-- [ ] 8.1 Dodaj publikację i cofnięcie publikacji dostępne wyłącznie właścicielowi; wyjaśnij zakres publikacji.
+- [ ] 8.1 Dodaj poziomy `public`, `restricted`, `private` oraz ich zmianę zgodnie z `world.visibility.update`; nowy świat pozostaje domyślnie prywatny. Zmiana prywatności podlega historii i nie nadaje członkostwa ani prawa edycji.
 - [ ] 8.2 Utwórz na stronie głównej katalog rzeczywistych publicznych światów: okładka, tytuł, autor, opis, tagi.
 - [ ] 8.3 Dodaj wyszukiwanie, sortowanie, filtrowanie po tagach i stronicowanie katalogu.
-- [ ] 8.4 Udostępnij gościowi odczyt publicznego projektu, kart, relacji, grafu i ilustracji.
-- [ ] 8.5 Sprawdź, że gość nie może edytować projektu.
-- [ ] 8.6 Sprawdź brak prywatnych danych w katalogu, API, wyszukiwaniu i pod bezpośrednimi adresami plików, również po cofnięciu publikacji.
+- [ ] 8.4 Udostępnij Gościowi pełny odczyt aktualnej zawartości świata publicznego, wyłącznie „O świecie” świata ograniczonego i brak dostępu do świata prywatnego. Uwzględnij konta bez członkostwa; historia i ustawienia administracyjne nie należą do publicznego odczytu.
+- [ ] 8.5 Sprawdź brak edycji świata przez Gościa i komentowanie publicznego świata wyłącznie po zalogowaniu, bez wymogu członkostwa. Zweryfikuj minimum publicznego odczytu dla Custom i zmianę efektywnego dostępu po cofnięciu członkostwa.
+- [ ] 8.6 Sprawdź brak chronionych danych w katalogu, API, wyszukiwaniu, grafach, komentarzach i pod bezpośrednimi adresami bieżących oraz historycznych plików przy wszystkich trzech poziomach prywatności, także po ich zmianie.
 
-**Kamień milowy A:** pełny proces konto → świat → karty → relacje → graf → publikacja → odczyt przez gościa działa od początku do końca.
+**Kamień milowy A:** pełny proces konto → świat → współpraca i komentarze → karty → relacje i wpływ postaci → graf → udostępnienie → odczyt przez Gościa działa od początku do końca. Trzy poziomy prywatności i ograniczenia ról są egzekwowane w backendzie, a wszystkie zmiany danych i plików mają dostępną uprawnionym osobom historię wersji. Pełne MVP etapów 1–9 wymaga również wydarzeń i chronologii.
 
 ## 9. Wydarzenia i chronologia
 
@@ -167,16 +177,16 @@ Zależność: etap 8.
 
 - [ ] 9.1 Zatwierdź prosty model czasu fikcyjnego, nieznanych dat, przedziałów i porównywania czasu; nie zakładaj kalendarza gregoriańskiego.
 - [ ] 9.2 Dodaj tworzenie, szczegóły, edycję i usuwanie wydarzenia.
-- [ ] 9.3 Dodaj uczestników, ich role i miejsce; zapisuj zestaw zmian transakcyjnie.
+- [ ] 9.3 Dodaj uczestników, ich role i miejsca; zapisuj dane oraz odpowiadający im zestaw historii transakcyjnie jako jedną operację.
 - [ ] 9.4 Dodaj opis przebiegu, skutków i status opracowania wpisu niezależny od czasu wydarzenia.
 - [ ] 9.5 Dodaj listę chronologiczną i czytelną prezentację nieznanego czasu.
 - [ ] 9.6 Pokazuj wydarzenia na kartach uczestników i miejsc.
 - [ ] 9.7 Dodaj zależności: przed, doprowadziło do, jest częścią.
-- [ ] 9.8 Dodaj opcjonalną prezentację wydarzeń jako węzłów grafu bez kopiowania ich do tabeli kart.
+- [ ] 9.8 Dodaj prezentację wydarzeń jako węzłów grafu bez kopiowania ich do tabeli kart; ten widok należy do podstawowego MVP.
 - [ ] 9.9 Dodaj okres obowiązywania relacji między kartami i daty życia postaci potrzebne do reguł spójności.
-- [ ] 9.10 Sprawdź niepełne daty, porządek wydarzeń, uprawnienia i publiczny odczyt.
+- [ ] 9.10 Sprawdź niepełne daty, porządek wydarzeń, uprawnienia, odczyt zależny od prywatności oraz historię wydarzeń, statusów, uczestników, miejsc i zależności. `CURRENT_EVENT` korzysta z tej samej historii istniejącego wydarzenia.
 
-**Warunek ukończenia:** wydarzenia są powiązane z kartami i tworzą czytelną chronologię. Rozbudowana graficzna oś czasu i własne kalendarze są poza pierwszą wersją.
+**Warunek ukończenia podstawowego MVP etapów 1–9:** wydarzenia są powiązane z kartami i tworzą czytelną chronologię oraz graf zależności. Działają wszystkie zatwierdzone role, Custom, komentarze, prywatność i kompletna historia zmian danych oraz plików świata z porównaniem wersji. Rozbudowana graficzna oś czasu i własne kalendarze są poza pierwszą wersją; kontrola spójności należy do extended MVP w etapie 10.
 
 ## 10. Kontrola spójności
 
@@ -196,8 +206,8 @@ Zależność: etap 9.
 
 Zależność: etap 10; rozszerza członkostwo z etapu 4.
 
-- [ ] 11.1 Dodaj zaproszenie e-mail z rolą, bezpiecznym tokenem i terminem ważności.
-- [ ] 11.2 Dodaj przyjęcie zaproszenia po zalogowaniu na właściwe konto; token jest jednorazowy.
+- [ ] 11.1 Dodaj zaproszenie e-mail z rolą, bezpiecznym tokenem i terminem ważności. Nadanie Właściciela przez zaproszenie może autoryzować tylko Twórca; zaproszenie nie zastępuje osobnej operacji przekazania roli Twórcy.
+- [ ] 11.2 Dodaj przyjęcie zaproszenia po zalogowaniu na właściwe konto; token jest jednorazowy. Ponownie sprawdź aktualne uprawnienia wystawcy i odbiorcy oraz zapisz zmianę członkostwa w historii.
 - [ ] 11.3 Dodaj konfigurację SMTP przez środowisko i Mailpit do lokalnego demo.
 - [ ] 11.4 Wydziel wysyłkę od kontrolera i obsłuż awarię bez utraty danych ani ujawniania szczegółów SMTP.
 - [ ] 11.5 Dodaj idempotentny CRON czyszczący wygasłe zaproszenia.
@@ -210,7 +220,7 @@ Zależność: etap 10; rozszerza członkostwo z etapu 4.
 
 Zależność: etapy 0–11.
 
-- [ ] 12.1 Przejdź główny proces na kontach o różnych rolach oraz jako gość.
+- [ ] 12.1 Przejdź główny proces na kontach o różnych rolach, z Custom i jako Gość przy trzech poziomach prywatności; zweryfikuj komentarze, transfer Twórcy oraz historię i porównanie wersji danych/plików.
 - [ ] 12.2 Wykonaj końcowy przegląd autoryzacji, izolacji światów, CSRF, XSS, SQL Injection, sesji i uploadów.
 - [ ] 12.3 Zweryfikuj minimum 5 istotnych widoków na telefonie, tablecie i komputerze.
 - [ ] 12.4 Sprawdź klawiaturę, kontrast i oba motywy; przygotuj raport WCAG z datą, wynikami i naprawami.
@@ -234,7 +244,7 @@ Poniższa lista nie stanowi zlecenia implementacji:
 - uniwersalne wagi relacji 0–10;
 - mapa z terenem, odległościami i kosztami podróży;
 - zaawansowane kalendarze fikcyjne;
-- pełna historia wersji i przywracanie danych;
+- automatyczne przywracanie poprzedniego stanu, gałęzie i scalanie wersji (zapis pełnej historii zmian oraz odczyt i porównanie wersji należą już do MVP);
 - prywatność pojedynczych kart i ukrywanie spoilerów;
 - współpraca w czasie rzeczywistym;
 - AI i automatyczne generowanie fikcji;
