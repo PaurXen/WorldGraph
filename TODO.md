@@ -35,7 +35,7 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 - [x] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych. Użytkownik potwierdził format kart MYRA, kod rodzaju `same_as = 10`, reguły relacji, osobne wielokrotne wpisy wpływu, PostgreSQL, liczbowe ID i typ, Markdown w rekordach, zachowanie wersji oraz pierwszy poprawny zapis wygrywający konflikt. Ustalenia: [PROJECT.md — Dane i zapis](PROJECT.md#dane-i-zapis--ustalenia-08).
 - [x] 0.9 Uzupełnij AGENTS.md o zasady Git, granice warstw, weryfikację i warunki ukończenia zadania. Ustalenia: [AGENTS.md](AGENTS.md).
 - [x] 0.10 Rozszerz checklistę kryteriów o warunki akceptacji, status i dowód realizacji. Wariant B: tabela zbiorcza i opisy 36 kryteriów z weryfikacją oraz powiązaniami TODO w [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
-- [ ] 0.11 Wyjaśnij dopuszczalność zewnętrznej biblioteki grafowej przed jej wyborem.
+- [x] 0.11 Wyjaśnij dopuszczalność zewnętrznej biblioteki grafowej przed jej wyborem. Wariant A dopuszczony przez prowadzącego według informacji użytkownika z 2026-11-13. Zakres i źródło: [ARCHITECTURE.md — Biblioteka grafowa](ARCHITECTURE.md#biblioteka-grafowa--ustalenia-011). Wybór konkretnej biblioteki pozostaje w 7.1; żadna nie została jeszcze wybrana ani zainstalowana.
 
 **Warunek ukończenia:** zakres, nawigacja i podstawowy model są zapisane; nie ma niejawnych decyzji wymagających zgadywania przez agenta. Szczegółowe migracje powstają przy odpowiednich modułach.
 
@@ -152,7 +152,7 @@ Zależność: etap 5.
 
 Zależność: etap 6 oraz rozstrzygnięcie 0.11.
 
-- [ ] 7.1 Zapisz wybór technologii renderowania i jej ograniczenia.
+- [ ] 7.1 Wybierz bibliotekę JS do wizualizacji zgodnie z wariantem A dopuszczonym w 0.11. Zapisz nazwę, wersję, źródło dystrybucji, warunki licencji, potrzebne zależności i ograniczenia. Sprawdź relacje skierowane i wzajemne, wiele wpływów A→B, graf wydarzeń, dane filtrowane przez backend oraz wariant mobilny i listową alternatywę dla klawiatury. Zachowaj własny model, backend i integrację Fetch.
 - [ ] 7.2 Dodaj endpoint węzłów i krawędzi z kontrolą dostępu oraz ograniczeniem wielkości odpowiedzi. Uprawnienie do grafu nie może ujawniać kart, relacji, wpływów ani wydarzeń, do których użytkownik nie ma odczytu.
 - [ ] 7.3 Wyświetl graf istniejących kart i relacji w widokach Relacje, Lokacje i Los — wpływ postaci (FATE_GRAPH).
 - [ ] 7.4 Dodaj przesuwanie i przybliżanie.

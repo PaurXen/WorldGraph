@@ -5,7 +5,21 @@
 ## Zakładany stos
 - PHP (backend obiektowy), PostgreSQL, HTML/CSS, JavaScript.
 - Lokalne środowisko Docker Compose: Nginx → PHP 8.5-FPM (`pdo_pgsql`) → PostgreSQL 18.
-- Biblioteka grafowa JS do wyboru podczas implementacji.
+- Wariant A: dopuszczona zewnętrzna biblioteka JS do wizualizacji grafu; konkretny wybór pozostaje w 7.1.
+
+## Biblioteka grafowa — ustalenia 0.11
+
+Decyzja projektowa: **wariant A**, zewnętrzna biblioteka JavaScript do wizualizacji grafu. Biblioteka działa w przeglądarce i odpowiada za rysowanie, stylowanie, rozmieszczenie elementów oraz interakcje, takie jak zaznaczanie, przesuwanie i przybliżanie. Nie zastępuje własnego modelu, backendu PHP, SQL, routingu, autoryzacji, CRUD, historii zmian ani kodu integracji przez Fetch.
+
+Warunki wyboru i wdrożenia w etapie 7:
+
+- Obsługa skierowanych i wzajemnych relacji oraz wielu osobnych wpisów wpływu A→B bez ich scalania. `same_as = 10` jest kodem rodzaju relacji, a nie wagą rysowania lub siłą połączenia.
+- Wspólne dane kart i relacji dla widoków Relacje i Lokacje, osobne wpisy Influence dla Losu oraz wydarzenia i ich zależności dla grafu wydarzeń w etapie 9. Renderer nie tworzy kopii tych danych ani nowych reguł fabuły.
+- Dane otrzymywane przez Fetch są filtrowane przez backend zgodnie z aktualnym światem i uprawnieniami. Filtrowanie lub ukrywanie elementów w bibliotece jest prezentacją, nie autoryzacją.
+- Obsługa urządzeń mobilnych i zachowanie listowej alternatywy dla grafu, dostępnej z klawiatury. Sama biblioteka nie potwierdza spełnienia wymagań dostępności aplikacji.
+- W 7.1 należy zapisać nazwę, wersję, źródło dystrybucji, warunki licencji, potrzebne zależności i ograniczenia wybranego rozwiązania. Dodatkowe rozszerzenia wymagają uzasadnienia rzeczywistą potrzebą modułu.
+
+W 0.11 nie wybieramy konkretnej biblioteki, nie instalujemy zależności i nie dodajemy plików renderera. Decyzja dotyczy sposobu realizacji planowanego grafu; nie oznacza działającej implementacji ani zaliczenia kryteriów przedmiotu.
 
 ## Planowany przepływ
 `Browser → Router → Controller → Service → Repository → PostgreSQL`
