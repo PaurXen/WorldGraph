@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+/vendor/
+/node_modules/
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+.idea/
+.vscode/
+.postman/
+postman/
