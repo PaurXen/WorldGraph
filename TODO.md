@@ -1,6 +1,6 @@
 # TODO — WorldGraph
 
-Plan implementacji, wersja 2026-11-10.
+Plan implementacji, wersja 2026-11-13.
 
 ## Zasady pracy
 
@@ -32,7 +32,7 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 - [?] 0.5 Przygotuj prototyp minimum 5 istotnych ekranów w wariancie mobilnym i desktopowym ~~oraz eksport PDF~~.
 - [x] 0.6 Ustal model pojęciowy: User, World, WorldMember, Entity, Relationship, Event i uczestnicy wydarzenia.
 - [x] 0.7 Rozpisz macierz uprawnień Gościa, Czytelnika, Redaktora, Właściciela, Twórcy i Custom oraz trzy poziomy prywatności; uwzględnij komentarze i historię zmian w MVP. Ustalenia: [PROJECT.md — Role, prywatność i uprawnienia](PROJECT.md#role-prywatność-i-uprawnienia--ustalenia-07).
-- [ ] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych, w tym retencję historii i historycznych plików po usunięciu świata; nie usuwaj zapisu usunięcia świata przez nieuzgodnioną kaskadę.
+- [x] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych. Użytkownik potwierdził format kart MYRA, kod rodzaju `same_as = 10`, reguły relacji, osobne wielokrotne wpisy wpływu, PostgreSQL, liczbowe ID i typ, Markdown w rekordach, zachowanie wersji oraz pierwszy poprawny zapis wygrywający konflikt. Ustalenia: [PROJECT.md — Dane i zapis](PROJECT.md#dane-i-zapis--ustalenia-08).
 - [ ] 0.9 Uzupełnij AGENTS.md o zasady Git, granice warstw, weryfikację i warunki ukończenia zadania.
 - [ ] 0.10 Rozszerz checklistę kryteriów o warunki akceptacji, status i dowód realizacji.
 - [ ] 0.11 Wyjaśnij dopuszczalność zewnętrznej biblioteki grafowej przed jej wyborem.
@@ -92,21 +92,21 @@ Zależność: etap 3.
 
 Przed pierwszym zapisem świata w 4.2 przygotuj model historii z 4.9 i wspólny zapis z 4.10. Kolejne moduły mają korzystać z niego od pierwszej operacji zmieniającej dane; historia należy do podstawowego MVP etapów 1–9.
 
-- [ ] 4.1 Dodaj świat, członkostwo i role `creator`, `owner`, `editor`, `reader`, `custom`; zaktualizuj ERD. Każdy świat ma dokładnie jednego Twórcę i może mieć wielu Właścicieli.
+- [ ] 4.1 Dodaj świat, członkostwo i role `creator`, `owner`, `editor`, `reader`, `custom`; zaktualizuj ERD. Stosuj stałe liczbowe ID; karty mają dodatkowo osobny niezmienny typ. Każdy świat ma dokładnie jednego Twórcę i może mieć wielu Właścicieli.
 - [ ] 4.2 Utwórz prywatny świat wraz z członkostwem Twórcy i pierwszym zestawem historii zmian w jednym logicznym zapisie.
 - [ ] 4.3 Dodaj bibliotekę własnych i udostępnionych światów oraz stan pustej biblioteki.
 - [ ] 4.4 Dodaj otwieranie projektu i zakładkę O świecie.
 - [ ] 4.5 Dodaj edycję informacji i treści „O świecie” zgodnie z osobnymi uprawnieniami do treści oraz ustawień projektu.
 - [ ] 4.6 Dodaj nadawanie dostępu istniejącym użytkownikom, zmianę roli i odebranie dostępu zgodnie z macierzą. Tylko Twórca może nadać rolę Właściciela; zwykłe zarządzanie członkami nie może zmienić ani usunąć Twórcy.
-- [ ] 4.7 Dodaj usuwanie świata wyłącznie przez Twórcę, z potwierdzeniem, wpisem historii i polityką zależnych danych oraz retencji uzgodnioną w 0.8.
+- [ ] 4.7 Dodaj usuwanie świata wyłącznie przez Twórcę, z potwierdzeniem i wpisem historii. Wycofaj bieżący świat ze zwykłego dostępu, zachowując wszystkie skutecznie zapisane dane, historię i wersje plików na dyskach bez automatycznego czyszczenia; zachowanie danych nie nadaje nowego dostępu do archiwum. Zależności obsłuż zgodnie z zatwierdzoną polityką 0.8.
 - [ ] 4.8 Zweryfikuj role na oddzielnych kontach i bezpośrednich żądaniach HTTP: ochronę Twórcy, zakaz nadawania roli Właściciela przez inne osoby oraz brak samodzielnego rozszerzania uprawnień. Redaktor może usuwać także cudzą zawartość; każda taka zmiana podlega historii.
 - [ ] 4.9 Dodaj model historii: `ChangeSet` grupujący jedną operację jak commit oraz wpisy jej zmian. Zapisuj świat, identyfikator i poprzednią rewizję, wykonawcę, rzeczywisty czas UTC, operację, zmienione obiekty/pliki oraz stan przed/po lub różnicę pozwalającą odtworzyć obie wersje.
-- [ ] 4.10 Połącz każdą mutację świata z dopisaniem niezmiennej historii. Błąd zapisu historii ma wycofać zmianę; równoległe zapisy nie mogą gubić poprzedniej wersji. Obejmij członkostwo, role, Custom, ustawienia, prywatność i transfer Twórcy; kolejne moduły dołączają swoje dane do tego samego mechanizmu. Nie zapisuj haseł, tokenów, cookies ani sekretów środowiska.
+- [ ] 4.10 Połącz każdą mutację świata z dopisaniem niezmiennej historii. Błąd zapisu historii ma wycofać zmianę. Dla tej samej wersji obiektu wygrywa pierwszy poprawnie zatwierdzony zapis; zapis nieaktualnej rewizji odrzuć jako konflikt 409 bez nadpisania, automatycznego scalania ani nowej rewizji skutecznej zmiany. Zachowaj niezapisany tekst do porównania i świadomego ponowienia. Niezależne obiekty mogą być zmieniane kolejno w liniowej historii świata. Obejmij członkostwo, role, Custom, ustawienia, prywatność i transfer Twórcy; kolejne moduły dołączają swoje dane do tego samego mechanizmu. Nie zapisuj haseł, tokenów, cookies ani sekretów środowiska.
 - [ ] 4.11 Dodaj przegląd zestawów zmian oraz odczyt i porównanie historycznych wersji. Domyślne `history.read` mają Twórca, Właściciel i Redaktor; Custom może otrzymać je jawnie. Gość i Czytelnik nie mają go domyślnie. Obecne prawa do danych źródłowych nadal obowiązują, a historia ustawień i członkostwa wymaga odpowiednich praw administracyjnych. Nie udostępniaj operacji edycji lub usuwania wpisów historii.
 - [ ] 4.12 Dodaj konfigurację Custom jako dodatnie uprawnienia obszar–operacja, bez jawnych zakazów i reguł dla pojedynczych kart. Uwzględnij minimum odczytu wynikające z prywatności, wymagane uprawnienia zależne i zakres administracyjny nadającego; uprawnienia zastrzeżone dla Twórcy nie podlegają delegowaniu.
 - [ ] 4.13 Dodaj atomowe przekazanie roli Twórcy istniejącemu Właścicielowi wyłącznie przez obecnego Twórcę. Poprzedni Twórca zostaje Właścicielem; zachowaj historyczną informację o pierwotnym twórcy i zapisz transfer w historii.
 - [ ] 4.14 Dodaj komentarze do świata i jego dostępnej zawartości: odczyt, dodawanie po zalogowaniu, edycję i usuwanie własnych komentarzy oraz moderację przez Właściciela i Twórcę lub Custom z odpowiednim uprawnieniem. Sprawdzaj dostęp do kontekstu komentarza i zapisuj utworzenie, edycję oraz usunięcie w historii.
-- [ ] 4.15 Sprawdź kompletność historii, porównanie wersji, brak mutacji po awarii jej zapisu, równoległe edycje, ochronę wpisów i brak sekretów. Zweryfikuj własne/cudze komentarze oraz odebranie praw także do historii i jej historycznych plików.
+- [ ] 4.15 Sprawdź kompletność historii, porównanie wersji, brak mutacji po awarii jej zapisu i ochronę wpisów. Sprawdź konflikt dwóch zapisów tej samej rewizji: pierwszy poprawny zapis pozostaje, drugi otrzymuje 409 i zachowuje roboczą treść; zapisy różnych obiektów nie tracą historii. Zweryfikuj własne/cudze komentarze, brak sekretów oraz odebranie praw także do historii i jej historycznych plików.
 
 **Warunek ukończenia:** użytkownicy widzą właściwe projekty i mają możliwości zgodne z macierzą, w tym Custom i komentarze. Twórca pozostaje chroniony, jego transfer działa atomowo, a jedynie on nadaje rolę Właściciela i usuwa świat. Każda udana mutacja ma niezmienny zestaw historii z porównaniem wersji i osobną kontrolą dostępu. Projekty na tym etapie są jeszcze prywatne; trzy poziomy udostępnienia wdraża etap 8.
 
@@ -114,16 +114,20 @@ Przed pierwszym zapisem świata w 4.2 przygotuj model historii z 4.9 i wspólny 
 
 Zależność: etap 4.
 
+Użytkownik sprawdził i zatwierdził format pól na podstawie `myra.txt` w 0.8; opisuje go PROJECT.md. Opisy są źródłem Markdown w rekordach PostgreSQL; odwołania do plików służą ilustracjom i załącznikom. Nie dodawaj pól zależnych od typu ani dodatkowego unikalnego `fate_name` poza zatwierdzonym formatem.
+
 - [ ] 5.1 Dodaj wspólny model karty należącej do świata; zacznij od postaci.
 - [ ] 5.2 Dodaj listę, szczegóły, tworzenie i edycję karty.
-- [ ] 5.3 Dodaj pola wspólne: nazwa, krótki opis, charakterystyka, historia/opis szczegółowy i aliasy.
-- [ ] 5.4 Rozszerz model o miejsca, frakcje, rasy/gatunki i artefakty oraz ich zatwierdzone pola.
+- [ ] 5.3 Dodaj zatwierdzone pola wspólne: wymaganą nieunikalną nazwę oraz opcjonalne krótki opis, charakterystykę, opis fabularny, listę aliasów z kontekstem i listę celów. Rewizja jest metadanymi systemowymi; nie jest polem edytowanym przez autora.
+- [ ] 5.4 Rozszerz model o miejsca, frakcje, rasy/gatunki i artefakty współdzielące zatwierdzony format karty, bez osobnych zestawów dodatkowych pól na tym etapie.
 - [ ] 5.5 Dodaj tagi, wyszukiwanie, filtrowanie i stronicowanie.
-- [ ] 5.6 Dodaj usuwanie karty zgodne z ustaloną polityką zależności.
+- [ ] 5.6 Dodaj wycofywanie karty z bieżących widoków, usuwanie jej aktywnych relacji i wpływów przy obu końcach oraz odłączanie uczestnictwa i wskazania miejsca, bez usuwania innych kart i wydarzeń. Jej komentarze i ilustracje usuń z bieżących widoków kontekstu; wszystkie wcześniejsze dane i pliki zachowaj. Sprawdź uprawnienia do wszystkich skutków i zapisz je w jednym zestawie historii.
 - [ ] 5.7 Dodaj upload ilustracji: limit rozmiaru, rzeczywisty MIME, dozwolone rozszerzenie i unikalna nazwa. Zamiana lub usunięcie ilustracji ma zachować jej poprzednie bajty i metadane do odczytu historycznej wersji, a nie tylko nazwę lub hash.
 - [ ] 5.8 Zapewnij kontrolę dostępu do bieżących i historycznych ilustracji zgodnie z prywatnością, uprawnieniami i kontekstem. W bazie przechowuj odwołania do niezmiennych wersji plików; zapis metadanych i historii oraz publikacja przygotowanych plików muszą dawać jeden logiczny wynik także przy awarii.
 - [ ] 5.9 Wykorzystaj mechanizm ilustracji również dla okładki świata.
 - [ ] 5.10 Sprawdź CRUD, walidację, izolację kart różnych światów oraz historię wszystkich zmian kart i plików, także cudzej zawartości usuwanej przez Redaktora. Zweryfikuj stare wersje po zamianie lub usunięciu ilustracji i awarię zapisu pliku/historii.
+- [ ] 5.11 Egzekwuj niezmienność ID i typu istniejącej karty oraz brak ponownego użycia ID. Do przedstawienia tego samego bytu w innym typie powstaje nowa karta; powiązanie z poprzednią wdraża 6.10 według zatwierdzonych reguł 0.8.
+- [ ] 5.12 Dodaj bezpieczne renderowanie Markdown bez wykonywalnego HTML lub skryptów i obejmij źródłowy tekst historią. Sprawdź, że odrzucony zapis nieaktualnej rewizji zachowuje treść autora, a zmiana opisu nie zmienia ID ani typu karty.
 
 **Warunek ukończenia:** działa encyklopedia świata bez konieczności używania grafu. Relacji takich jak przynależność do frakcji nie duplikujemy w osobnych polach kart.
 
@@ -131,17 +135,18 @@ Zależność: etap 4.
 
 Zależność: etap 5.
 
-- [ ] 6.1 Zatwierdź początkowe typy relacji, dopuszczalne typy końców, kierunek, duplikaty i połączenia do samego siebie.
+- [ ] 6.1 Wdroż zatwierdzony w 0.8 katalog rodzajów relacji: należy do, jest przedstawicielem, znajduje się w, jest częścią, sojusz, wrogość i ten sam byt. Egzekwuj dozwolone końce, kierunek, brak połączenia rekordu z samym sobą i duplikaty według PROJECT.md. `same_as = 10` to kod rodzaju, nie waga; użytkownik już potwierdził te reguły.
 - [ ] 6.2 Dodaj model: źródło, cel, typ, kierunek/wzajemność, opis i świat.
 - [ ] 6.3 Dodaj tworzenie relacji z poziomu karty.
 - [ ] 6.4 Wyświetlaj relacje przy obu końcach i umożliwiaj przejście do powiązanej karty.
-- [ ] 6.5 Dodaj edycję i usuwanie relacji.
+- [ ] 6.5 Dodaj edycję i usuwanie relacji. Wycofanie jednego powiązania usuwa je z bieżących widoków obu końców i grafu, bez usuwania kart końcowych; zapis historyczny pozostaje.
 - [ ] 6.6 Egzekwuj izolację światów w backendzie i odpowiednich ograniczeniach bazy.
 - [ ] 6.7 Dodaj Fetch GET i POST z JSON, obsługą statusów, ładowania, powodzenia i błędów.
 - [ ] 6.8 Sprawdź nieuprawnione operacje, nieistniejące karty, próby łączenia światów oraz historię tworzenia, edycji i usuwania relacji.
-- [ ] 6.9 Dodaj tworzenie, odczyt, edycję i usuwanie kierunkowego wpływu postaci zgodnie z zapisem ustalonym w 0.8 oraz uprawnieniami `influences`; obejmij wszystkie zmiany historią. Nie narzucaj uniwersalnych wag 0–10.
+- [ ] 6.9 Dodaj osobny model i CRUD wpisów wpływu: świat, ID, rewizja, źródłowa i docelowa karta postaci oraz opis działania/kontekstu. Dopuść kilka wpisów A→B; egzekwuj odrębne uprawnienia `influences` oraz historię. Nie zapisuj wpływów jako zwykłego rodzaju relacji i nie narzucaj wag liczbowych.
+- [ ] 6.10 Dodaj utworzenie nowej karty innego typu i powiązania `same_as` (kod rodzaju 10) z poprzednią jako jeden zestaw zmian. Zachowaj poprzednie ID i typ, bez automatycznego scalenia kart lub przenoszenia innych relacji; wymagaj uprawnień do wszystkich zmienianych danych.
 
-**Warunek ukończenia:** relacje działają jako lista na prawdziwych danych i można je tworzyć bez przeładowania strony. Uniwersalne wagi 0–10 pozostają poza MVP.
+**Warunek ukończenia:** relacje i osobne wpisy wpływu działają jako listy na prawdziwych danych i można je tworzyć bez przeładowania strony. Działa powiązanie `same_as` (kod 10) pomiędzy nową kartą innego typu a poprzednią, z zachowaniem odrębnych ID i historii. Uniwersalne wagi 0–10 pozostają poza MVP.
 
 ## 7. Interaktywny graf
 
@@ -176,7 +181,7 @@ Zależność: etap 7.
 Zależność: etap 8.
 
 - [ ] 9.1 Zatwierdź prosty model czasu fikcyjnego, nieznanych dat, przedziałów i porównywania czasu; nie zakładaj kalendarza gregoriańskiego.
-- [ ] 9.2 Dodaj tworzenie, szczegóły, edycję i usuwanie wydarzenia.
+- [ ] 9.2 Dodaj tworzenie, szczegóły, edycję i wycofanie wydarzenia z bieżących widoków zgodnie z 0.8. Wycofaj jego uczestnictwa, miejsca i zależności, zachowując karty, pozostałe wydarzenia i wszystkie historyczne dane oraz pliki.
 - [ ] 9.3 Dodaj uczestników, ich role i miejsca; zapisuj dane oraz odpowiadający im zestaw historii transakcyjnie jako jedną operację.
 - [ ] 9.4 Dodaj opis przebiegu, skutków i status opracowania wpisu niezależny od czasu wydarzenia.
 - [ ] 9.5 Dodaj listę chronologiczną i czytelną prezentację nieznanego czasu.

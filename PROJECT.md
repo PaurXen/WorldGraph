@@ -1,6 +1,6 @@
 # PROJECT.md — WorldGraph
 
-> Dokument zatwierdzonego celu, zakresu MVP, nawigacji i uprawnień (punkty 0.2–0.4 oraz 0.6–0.7 TODO). Ustalenia 0.7 rozszerzają MVP o role Twórcy i Custom, trzy poziomy prywatności, komentarze oraz historię zmian danych i plików świata. Podstawowe MVP nadal obejmuje etapy 1–9; etap 10 stanowi extended MVP. Dokument opisuje plan produktu; aktualny stan implementacji przedstawia README.md.
+> Dokument zatwierdzonego celu, zakresu MVP, nawigacji, uprawnień i struktury danych (punkty 0.2–0.4 oraz 0.6–0.8 TODO). Ustalenia 0.7 rozszerzają MVP o role Twórcy i Custom, trzy poziomy prywatności, komentarze oraz historię zmian danych i plików świata. W 0.8 zatwierdzono format kart oparty na MYRA, reguły relacji i wpływu postaci, sposób zapisu, usuwania i zachowania wersji oraz rozstrzygania równoległych edycji. Podstawowe MVP nadal obejmuje etapy 1–9; etap 10 stanowi extended MVP. Dokument opisuje plan produktu; aktualny stan implementacji przedstawia README.md.
 
 ## Problem
 Twórcy rozbudowanych uniwersów przechowują informacje o postaciach, miejscach, frakcjach i fabule w wielu notatkach. Utrudnia to porządkowanie wiedzy, odnajdywanie powiązań i planowanie dalszego przebiegu historii. Współpraca wymaga również jasnego określenia, kto może przeglądać i edytować materiały.
@@ -31,8 +31,8 @@ Pierwsza użyteczna wersja to encyklopedia świata z kilkoma widokami grafów, w
 
 1. **Konta i dostęp:** rejestracja, logowanie, sesja, wylogowanie i ustawienia konta; role Twórcy, Właściciela, Redaktora, Czytelnika i Custom w określonym świecie oraz dostęp Gościa wynikający z prywatności.
 2. **Światy:** biblioteka własnych i udostępnionych projektów, tworzenie świata, opis jego założeń, edycja, usuwanie wyłącznie przez Twórcę, zarządzanie dostępem istniejących użytkowników i przekazywanie roli Twórcy.
-3. **Karty elementów świata:** postacie, miejsca, frakcje, rasy/gatunki i artefakty; tworzenie, przeglądanie, edycja i usuwanie, opisy, aliasy, tagi oraz ilustracje. Szczegółowe pola określi punkt 0.8 TODO.
-4. **Relacje:** tworzenie, przeglądanie, edycja i usuwanie opisanych powiązań między kartami tego samego świata. Typy i zasady relacji określi punkt 0.8 TODO.
+3. **Karty elementów świata:** postacie, miejsca, frakcje, rasy/gatunki i artefakty; tworzenie, przeglądanie, edycja i usuwanie, opisy, aliasy, cele, tagi oraz ilustracje. Wspólny format określa zatwierdzona sekcja 0.8.
+4. **Relacje:** tworzenie, przeglądanie, edycja i usuwanie opisanych powiązań między kartami tego samego świata. Rodzaje i zasady relacji określa zatwierdzona sekcja 0.8.
 5. **Listy i grafy:** wyszukiwanie, filtrowanie i stronicowanie list; widoki relacji, powiązań lokacji, wpływu postaci (`FATE_GRAPH`) i zależności wydarzeń inspirowane grafami MYRA. Grafy pozwalają na przesuwanie, przybliżanie, filtrowanie i przechodzenie do szczegółów wybranych elementów. Na urządzeniach mobilnych i dla obsługi klawiaturą dostępne są odpowiednie listy relacji, wpływów i zależności.
 6. **Prywatność i Odkrywaj:** stany publiczny, ograniczony i prywatny; katalog publicznych światów z wyszukiwaniem, filtrowaniem i sortowaniem; pełny publiczny odczyt albo sam wstęp ograniczonego świata zgodnie z macierzą 0.7.
 7. **Wydarzenia i chronologia:** tworzenie, przeglądanie, edycja i usuwanie wydarzeń, ich uczestnicy i miejsca, opis przebiegu i skutków, status opracowania oraz zależności między wydarzeniami. Lista chronologiczna uwzględnia brakujące i niepewne daty. Prosty model czasu fikcyjnego wymaga ustalenia w 9.1 i nie zakłada automatycznie kalendarza gregoriańskiego.
@@ -94,7 +94,7 @@ Wiersze dotyczą jednego świata. „Z prywatności” oznacza dostęp z tabeli 
 | Odczyt historii i porównywanie wersji | Nie | Nie | Tak, w dostępnym zakresie | Tak | Tak | Przydzielone, w dostępnym zakresie |
 | Nadpisanie lub usunięcie wpisu historii zwykłą operacją | Nie | Nie | Nie | Nie | Nie | Nie |
 
-Usuwanie cudzej zawartości przez Redaktora dotyczy treści świata; nie obejmuje moderowania cudzych komentarzy, usunięcia świata ani zmiany logów. Skutki usuwania powiązanych danych i retencja historii po usunięciu świata należą do 0.8. Usunięcie świata wymaga potwierdzenia Twórcy.
+Usuwanie cudzej zawartości przez Redaktora dotyczy treści świata; nie obejmuje moderowania cudzych komentarzy, usunięcia świata ani zmiany logów. Zasady 0.8 określają wycofanie danych i powiązań z bieżących widoków, bez niszczenia ich historycznych wersji i plików. Usunięcie kontekstu ukrywa jego komentarze w bieżących widokach, bez usuwania cudzej wypowiedzi z historii; nie daje prawa do osobnej moderacji cudzych komentarzy. Usunięcie świata wymaga potwierdzenia Twórcy.
 
 ### Katalog parametrów
 
@@ -138,11 +138,80 @@ Parametr ma postać `obszar.operacja`. Każdy element listy operacji oznacza oso
 - Wpisów historii nie można zwyczajnie edytować ani usuwać; kolejna zmiana dopisuje nowy zestaw. Przegląd i porównanie wersji są częścią MVP. Automatyczne przywracanie stanu, gałęzie i scalanie wersji nie zostały zlecone.
 - Historia ma własną kontrolę dostępu. Publiczny odczyt i rola Czytelnika nie udostępniają jej domyślnie. `history.read` wymaga też aktualnego prawa do odpowiednich danych; wpisy o ustawieniach i członkostwach wymagają odpowiednich praw administracyjnych. Filtrowanie obejmuje treść, nazwy i identyfikatory obiektów, różnice oraz historyczne pliki, aby nie ujawniać dawnych lub usuniętych danych nieuprawnionym osobom.
 - Do historii nie trafiają hasła, tokeny, cookies, sekrety środowiska ani zawartość `.env`. Historia aplikacji dotyczy danych i plików świata; kod repozytorium nadal wersjonuje Git. Nie jest to monitoring dowolnych zmian systemu plików hosta.
-- Polityka zachowania i dostępu do historii po usunięciu całego świata wymaga doprecyzowania w 0.8 przed implementacją usuwania. Nie można bez tej decyzji usuwać historii kaskadowo razem ze światem i tracić zapisu jego usunięcia.
+- Zgodnie z 0.8 wszystkie skutecznie zapisane dane, historia i wersje plików pozostają na dyskach, również po usunięciu świata z bieżących widoków. Na razie nie ma terminu retencji, automatycznego czyszczenia ani fizycznej kaskady niszczącej archiwum. Zachowanie na dysku nie udostępnia danych publicznie; historia nadal wymaga `history.read` i odpowiednich uprawnień do obszaru oraz kontekstu.
 
 ### Warunek ukończenia 0.7
 
 Ukończenie 0.7 oznacza spójny zapis ról, prywatności, macierzy, parametrów, ochrony Twórcy i zatwierdzonego zakresu historii w dokumentacji oraz zadaniach implementacyjnych. Weryfikacja późniejszej implementacji musi objąć zmianę i odebranie praw, próby samodzielnego zwiększenia dostępu, niedozwolone nadanie `owner`, atomowe przekazanie Twórcy, trzy poziomy prywatności, komentowanie po zalogowaniu, usunięcie cudzej treści przez Redaktora oraz kompletność i ochronę historii. Odhaczenie 0.7 nie oznacza działającej autoryzacji, komentarzy ani wersjonowania.
+
+## Dane i zapis — ustalenia 0.8
+
+### Zatwierdzone decyzje
+
+- **Baza danych:** PostgreSQL jako relacyjna baza główna. Zbiory kart, relacji, wydarzeń, uczestnictwa i historii są ze sobą powiązane; grafy prezentują te dane. Dodatkowy silnik bazy grafowej nie jest potrzebny w zatwierdzonym zakresie.
+- **Identyfikacja:** stałe liczbowe `id` oraz osobny `type`. Docelowo ID jest generowane jako `BIGINT` i chronione kluczem głównym; nie jest zmieniane ani ponownie przydzielane po usunięciu. Wszystkie typy kart należą do wspólnego zbioru kart ze wspólną numeracją; odrębne zbiory, np. wydarzenia, mogą mieć własną numerację. Odwołanie poza jednym zbiorem musi określać także rodzaj obiektu. Prefiks w rodzaju `c42` może służyć prezentacji, bez dodatkowego obowiązkowego identyfikatora `fate_name`.
+- **Treść:** opisy przechowywane w rekordach bazy, w źródłowej postaci Markdown. Pliki służą ilustracjom i załącznikom, a rekord wskazuje konkretną wersję pliku. Markdown nie daje prawa do osadzania wykonywalnego HTML lub skryptów; sposób bezpiecznego renderowania zostanie dobrany podczas implementacji, bez wyboru nowej biblioteki w tym zadaniu.
+- **Niezmienność typu:** istniejąca karta postaci nie może zmienić typu. Powstaje nowa karta z nowym ID i innym typem, powiązana z poprzednią jako ten sam byt. Poprzednia karta zachowuje ID i typ; utworzenie nowej nie oznacza automatycznego scalenia ani przeniesienia pozostałych relacji.
+- **Oznaczenie tożsamości:** `10` jest zatwierdzonym kodem rodzaju relacji `same_as` — „są tym samym”. Nie jest wagą ani elementem uniwersalnej skali 0–10. Nowsza decyzja użytkownika zastępuje odmienne znaczenia dawnej skali w `myra.txt`, którego nie zmieniamy.
+- **Usuwanie relacji:** usunięta bieżąca relacja znika przy obu końcach i w grafie. Jest to jedno powiązanie prezentowane w kilku miejscach; usunięcie go nie usuwa kart końcowych. Historia relacji pozostaje zachowana.
+- **Zachowanie danych:** na razie wszystkie skutecznie zapisane dane, logi i historyczne wersje plików pozostają na dyskach bez automatycznej daty wygaśnięcia. Usunięcie świata wycofuje jego bieżącą zawartość ze zwykłego dostępu, bez niszczenia zachowanych wersji i bez nadawania nowego dostępu do archiwum.
+- **Równoległy zapis:** wygrywa pierwszy poprawnie zatwierdzony zapis aktualnej wersji danego obiektu. Późniejsza próba zapisu oparta na nieaktualnej rewizji jest odrzucana jako konflikt (`409`), bez nadpisania pierwszego zapisu i bez automatycznego scalania. Niezapisana treść pozostaje dostępna autorowi do porównania i ponowienia po zapoznaniu się z aktualną wersją. Nie oznacza to wykonywania commitów Git przez aplikację. Zmiany niezależnych obiektów mogą zostać kolejno zapisane do wspólnej historii świata.
+
+### Format karty zatwierdzony na podstawie MYRA
+
+Użytkownik sprawdził i zatwierdził poniższy format przed jego wprowadzeniem. Jest wspólny dla postaci, lokacji, frakcji, ras/gatunków i artefaktów. Na tym etapie nie dodajemy osobnych zestawów pól zależnych od typu.
+
+| Pole | Format i obowiązkowość |
+|---|---|
+| `id` | Systemowy, niezmienny identyfikator liczbowy. |
+| `world_id` | Systemowe wskazanie świata, do którego należy karta. |
+| `type` | Wymagany przy tworzeniu, później niezmienny: postać, lokacja, frakcja, rasa/gatunek lub artefakt. |
+| `revision` | Systemowe oznaczenie wersji do kontroli zapisu; użytkownik nie edytuje go ręcznie. |
+| `name` | Wymagana niepusta nazwa; może się powtarzać. |
+| `aliases` | Opcjonalna lista elementów `{name, context}`: nazwa aliasu oraz opcjonalny kontekst, np. przez kogo lub kiedy jest używany. |
+| `characteristics` | Opcjonalny Markdown: wygląd, charakter, budowa lub cechy elementu odpowiednie do typu. |
+| `descriptions` | Opcjonalny Markdown: opis fabularny i pozostałe informacje. Nie jest logiem zmian aplikacji. |
+| `goals` | Opcjonalna lista celów z treścią Markdown. |
+| `summary` | Opcjonalny krótki opis, wynikający z dotychczasowego zakresu MVP. |
+| `tags` | Opcjonalna lista tagów z zakresu MVP. |
+| `illustrations` | Opcjonalne odwołania do wersjonowanych plików ilustracji. |
+
+Jedyną identyfikacją karty jest `id` w jej zbiorze; nie dodajemy obowiązkowego unikalnego `fate_name`. Opisy nie zastępują strukturalnych relacji do innych kart. Format list, obowiązkowość i znaczenie pól są zatwierdzone; szczegóły fizycznego zapisu i techniczne limity żądania oraz plików powstaną z walidacją odpowiednich modułów. Wydarzenia pozostają odrębnymi wpisami, a ich dokładny model czasu należy do 9.1. Dialogi nadal pozostają poza podstawowym MVP.
+
+### Początkowe rodzaje i reguły relacji
+
+| Rodzaj | Dozwolone końce | Kierunek |
+|---|---|---|
+| `belongs_to` — należy do | Postać → frakcja | Skierowana |
+| `is_of_species` — jest przedstawicielem | Postać → rasa/gatunek | Skierowana |
+| `located_in` — znajduje się w | Postać lub artefakt → lokacja | Skierowana |
+| `part_of` — jest częścią | Lokacja → lokacja | Skierowana |
+| `allied_with` — sojusz | Postać/frakcja ↔ postać/frakcja | Wzajemna |
+| `hostile_to` — wrogość | Postać/frakcja ↔ postać/frakcja | Wzajemna |
+| `same_as` — ten sam byt, kod `10` | Dowolne dwie różne karty, także różnych typów | Wzajemna |
+
+- Relacja ma własne liczbowe ID, świat, dwa końce, rodzaj, opis i rewizję. Oba końce wskazują istniejące karty tego samego świata; rekord nie może być połączony sam ze sobą.
+- Dla pary i danego rodzaju istnieje najwyżej jedna bieżąca relacja w danym kierunku. Odwrócony zapis relacji wzajemnej jest duplikatem, a przeciwny kierunek relacji skierowanej jest osobnym powiązaniem. Między parą kart mogą istnieć różne rodzaje relacji.
+- Rodzaj określa kierunek i dozwolone typy końców. `same_as` nie scala ID, treści, uprawnień ani pozostałych relacji i nie tworzy automatycznie dalszych powiązań. Kod `10` dotyczy tego rodzaju, a nie siły wpływu w `FATE_GRAPH`.
+- Utworzenie nowej karty innego typu i powiązania `same_as` z poprzednią jest jedną operacją i jednym zestawem historii. Wymaga odpowiednich praw do kart oraz relacji; dotychczasowa karta nie zmienia typu.
+
+### Osobne wpisy wpływu postaci
+
+Wpływ jest odrębnym rodzajem danych, a nie rodzajem zwykłej relacji. Ma własne ID, świat i rewizję oraz źródłową i docelową kartę dwóch różnych postaci tego świata i opis działania lub kontekstu w Markdown. Wykorzystuje istniejące karty; nie tworzy kopii postaci.
+
+Między tą samą parą A→B może istnieć kilka wpisów wpływu opisujących różne działania lub konteksty. Odczyt i zmiany podlegają `influences`; prawa do zwykłych relacji nie dają automatycznie dostępu do wpływów. `FATE_GRAPH` przedstawia ich kierunek i opis, pozostając częścią MVP. Nie wprowadzamy obowiązkowych wag liczbowych ani nie stosujemy do wpływów kodu tożsamości `10`.
+
+### Usuwanie bieżącej treści i zachowanie historii
+
+- Usunięcie karty wycofuje ją z bieżących list i grafów. Usuwa aktywne relacje i wpływy, w których karta jest dowolnym końcem, oraz odłącza jej uczestnictwa i wskazania jako miejsca wydarzeń. Inne karty i same wydarzenia pozostają.
+- Komentarze i ilustracje przypisane do usuniętej karty znikają z bieżących widoków jej kontekstu. Zapisane komentarze, dane relacji i uczestnictwa oraz wszystkie wcześniejsze wersje plików pozostają zachowane w historii i magazynie.
+- Analogicznie wycofanie wydarzenia usuwa z bieżącej treści jego uczestnictwa, miejsca i zależności po obu końcach oraz udostępnianie jego kontekstu. Nie usuwa kart uczestników, lokacji ani pozostałych wydarzeń. Usunięcie samej relacji lub wpływu usuwa jedno powiązanie z widoków obu końców, bez usuwania kart.
+- Usunięcie komentarza albo odłączenie ilustracji zmienia bieżący stan; nie niszczy dawnych treści lub bajtów pliku. Wycofanie całego świata jest operacją Twórcy, wyłącza zwykły dostęp i zachowuje dane zgodnie z zatwierdzoną retencją bez terminu czyszczenia.
+- Wszystkie skutki operacji stanowią jeden zestaw zmian. Usuwanie nie jest obejściem Custom: backend sprawdza prawa do wszystkich zmienianych danych, a brak wymaganych praw odrzuca całą operację bez częściowej zmiany. Dostęp do zachowanej historii nadal wymaga `history.read` i odpowiednich praw źródłowych.
+
+### Warunek ukończenia 0.8
+
+Format karty, katalog i reguły relacji, interpretacja `10` oraz osobny zapis wielokrotnych wpływów zostały potwierdzone przez użytkownika. Zapisano też zatwierdzone zasady identyfikacji, Markdown, niezmienności typu, usuwania, retencji i pierwszego poprawnego zapisu wygrywającego konflikt. Ukończenie 0.8 oznacza spójne ustalenia dokumentacyjne; nie tworzy tabel, formularzy ani działającego mechanizmu zapisu.
 
 ## Strony i nawigacja
 
@@ -190,7 +259,7 @@ Gdy nie ma publicznych światów, Odkrywaj pokazuje komunikat o pustym katalogu.
 
 ### Granice ustaleń 0.3
 
-Mapa określa strony, ich cele, podstawowy dostęp, działania i przejścia. Zakładki wewnątrz projektu opisuje poniższa sekcja ustaleń 0.4. Macierz 0.7 aktualizuje dostęp do tych stron i dodaje historię; szczegółowe pola kart, zasady relacji i retencja historii po usunięciu świata pozostają w 0.8. Widoki szczegółów i edycji kart będą rozwijane w etapie 5. Wydarzenia należą do podstawowego MVP, a właściwa kontrola spójności do extended MVP.
+Mapa określa strony, ich cele, podstawowy dostęp, działania i przejścia. Zakładki wewnątrz projektu opisuje poniższa sekcja ustaleń 0.4. Macierz 0.7 aktualizuje dostęp do tych stron i dodaje historię; ustalenia 0.8 określają zatwierdzony format kart, reguły relacji, wpływy, zachowanie danych i sposób zapisu. Widoki szczegółów i edycji kart będą rozwijane w etapie 5. Wydarzenia należą do podstawowego MVP, a właściwa kontrola spójności do extended MVP.
 
 Ukończenie 0.3 oznacza zapisanie i sprawdzenie tej mapy. Implementacja stron, formularzy i routingu jest realizowana w odpowiednich etapach TODO.
 
@@ -217,7 +286,7 @@ Wstęp/README oznacza rolę treści „O świecie”; sposób jej formatowania z
 | **Relacje** | `RELETIONSHIPS_GRAPH` | Domyślny widok kart świata i ich opisanych relacji, z filtrowaniem i przejściem do szczegółów. Podstawowe MVP. |
 | **Lokacje** | `LOCATIONES_GRAPH` | Widok połączeń między kartami miejsc, wyodrębniony z danych świata. Podstawowe MVP obejmuje graf powiązań lokacji; mapa przestrzenna, teren, odległości i koszty podróży pozostają odłożone. |
 | **Wydarzenia** | `EVENTE_GRAPH` | Wydarzenia jako węzły oraz ich zależności, np. „przed”, „doprowadziło do” i „jest częścią”. Podstawowe MVP, etap 9; dane są wspólne z zakładką Wydarzenia. |
-| **Los — wpływ postaci** | `FATE_GRAPH` | Graf przedstawiający wpływ poszczególnych postaci na inne postacie i ich działania w fabule. Węzły reprezentują postacie, a skierowane powiązania pokazują, kto wpływa na kogo i w jaki sposób. Jest narzędziem opisu wpływu, niezależnym od kontroli spójności. Należy do podstawowego MVP i jest realizowany w etapie 7, w ramach etapów 1–9. Sposób zapisu wpływu i ewentualne miary lub wagi wymagają ustalenia w 0.8. |
+| **Los — wpływ postaci** | `FATE_GRAPH` | Graf przedstawiający wpływ poszczególnych postaci na inne postacie i ich działania w fabule. Węzły reprezentują istniejące karty postaci, a skierowane powiązania pokazują osobne wpisy wpływu zatwierdzone w 0.8; kilka różnych wpisów A→B jest dozwolonych. Nie ma obowiązkowych wag liczbowych. Jest niezależny od kontroli spójności i należy do podstawowego MVP, etap 7 w ramach etapów 1–9. |
 
 Widok lokacji jest sposobem przeglądania istniejących kart i relacji. Graf wydarzeń korzysta z modelu wydarzeń i ich zależności. Przełączanie widoku zmienia prezentację danych, bez kopiowania kart ani wydarzeń. Dokładne parametry adresu wybranego widoku grafu zostaną ustalone przy jego implementacji.
 
@@ -250,15 +319,15 @@ Ukończenie 0.4 oznacza ustalenie zawartości, adresów, nawigacji i zachowania 
 | Element szkicu `myra.txt` | Zakres WorldGraph |
 |---|---|
 | `MAIN_LORE` | Wstęp/README w zakładce „O świecie”: opis i założenia świata, kierunek fabuły, jej cele i tematy. |
-| `MYRA_LIST` | Karty elementów świata z opisami i aliasami; szczegółowe pola będą ustalone w 0.8. |
+| `MYRA_LIST` | Karty elementów świata według formatu zatwierdzonego w 0.8: opisy, aliasy i cele oraz dodatki dotychczasowego MVP, bez dodatkowego unikalnego `fate_name`. |
 | `RELETIONSHIPS_GRAPH` | Relacje między kartami i ich wizualizacja w MVP, bez uniwersalnej skali wag 0–10. |
 | `EVENTS_LIST`, `CURRENT_EVENT`, `EVENTE_GRAPH` | Wydarzenia, praca nad bieżącymi wpisami, chronologia i graf zależności w podstawowym MVP, etap 9. |
 | `LOCATIONES_GRAPH` | Inspiracja widoku połączeń lokacji w podstawowym MVP; funkcje mapy przestrzennej pozostają odłożone. |
-| `FATE_GRAPH` | Graf wpływu postaci na inne postacie i ich działania, realizowany w etapie 7 i wymagany w podstawowym MVP etapów 1–9. Szczegóły zapisu wpływu i ewentualnych miar należy ustalić w 0.8. |
+| `FATE_GRAPH` | Graf osobnych, kierunkowych wpisów wpływu postaci na inne postacie i ich działania, zatwierdzonych w 0.8; wiele wpisów dla pary A→B, bez obowiązkowych wag. Realizowany w etapie 7 i wymagany w podstawowym MVP etapów 1–9. |
 | `UPDATE_LIST` | Wspólna historia zmian danych i plików świata w podstawowym MVP: zestawy zmian, wersje i porównanie zgodnie z 0.7. |
 | Dialogi | Funkcja odłożona poza pierwszą wersję. |
 
-Szkic stanowi odniesienie do celu produktu. Model pojęciowy 0.6 zaktualizowano zgodnie z 0.7 w ARCHITECTURE.md; macierz uprawnień i wymagania historii zapisano powyżej. Szczegółowe pola, typy relacji oraz zasady usuwania i retencji historii pozostają do ustalenia w 0.8, w granicach zatwierdzonego zakresu.
+Szkic stanowi odniesienie do celu produktu. Model pojęciowy 0.6 zaktualizowano zgodnie z 0.7–0.8 w ARCHITECTURE.md; macierz uprawnień, wymagania historii, format kart, reguły relacji i wpływu oraz skutki usuwania zapisano powyżej po wymaganym potwierdzeniu użytkownika. Nowsze decyzje mają pierwszeństwo przed odmiennymi zapisami szkicu, którego nie nadpisujemy. Kod rodzaju `same_as = 10` nie jest dawną wagą MYRA.
 
 ## Warunek ukończenia MVP
 
@@ -276,7 +345,7 @@ W części wydarzeń użytkownik może utworzyć i edytować wydarzenie, powiąz
 
 Weryfikacja nawigacji obejmuje domyślne „O świecie”, osobne adresy zakładek, przełączanie widoków grafów oraz widoczną Spójność prowadzącą do TBI. Sprawdzenie `FATE_GRAPH` obejmuje utworzenie i edycję opisu kierunkowego wpływu jednej postaci na inną i jej działania oraz odczyt tego wpływu w grafie i odpowiedniej liście. Wszystkie wymagane funkcje etapów 1–9 muszą działać; TBI dla Wydarzeń lub któregokolwiek z czterech widoków grafu oznacza, że MVP nie jest jeszcze ukończone.
 
-Zakres MVP uznaje się za wykonany po zaimplementowaniu i sprawdzeniu wymienionych funkcji, historii oraz kontroli dostępu. Ustalenia dokumentacyjne 0.2–0.4 opisują zakres i nawigację, 0.6 model pojęciowy, a 0.7 jego aktualizację, uprawnienia i zakres historii; nie oznaczają implementacji aplikacji.
+Zakres MVP uznaje się za wykonany po zaimplementowaniu i sprawdzeniu wymienionych funkcji, historii oraz kontroli dostępu. Ustalenia dokumentacyjne 0.2–0.4 opisują zakres i nawigację, 0.6 model pojęciowy, 0.7 uprawnienia i historię, a 0.8 format i zasady danych; nie oznaczają implementacji aplikacji.
 
 ## Extended MVP — etap 10
 

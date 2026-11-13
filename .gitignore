@@ -11,3 +11,5 @@
 !/storage/cache/.gitkeep
 .idea/
 .vscode/
+.postman/
+postman/

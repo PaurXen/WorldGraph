@@ -27,7 +27,7 @@ CLFR/MYRA
 
 3. DIALOGUES_LIST
 > +'e_id' - event that dialog takes place in
-> +'d_n' - number of dialogue for chronology 
+> +'d_n' - number of dialogue for chronology (dx)
 > +'MYRA[]' - characters from 'MYRA_LIST' that take part in dialogue
 > +'content' - summarized version of the dialogue with details
 > +'emotions[]' - emotions that drives characters (c_id, emotions)
