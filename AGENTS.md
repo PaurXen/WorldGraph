@@ -9,6 +9,7 @@ Wskazówki dla agenta programistycznego pracującego nad tym repozytorium.
 - Nie dodawaj zależności, kontenerów, schematów SQL, endpointów ani klas „na zapas”.
 - Przed większą zmianą zaproponuj zakres i listę plików, których dotknie.
 - Realizuj już zlecony zakres bez ponownego pytania o tę samą zgodę. Rutynowe szczegóły wykonania w ramach zlecenia rozstrzygaj samodzielnie; zmiany zakresu lub zatwierdzonych reguł produktu uzgodnij z użytkownikiem.
+- Nie dodawaj komentarzy odwołujących się do promtów.
 
 ## Zasady docelowe
 

@@ -34,7 +34,7 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 - [x] 0.7 Rozpisz macierz uprawnień Gościa, Czytelnika, Redaktora, Właściciela, Twórcy i Custom oraz trzy poziomy prywatności; uwzględnij komentarze i historię zmian w MVP. Ustalenia: [PROJECT.md — Role, prywatność i uprawnienia](PROJECT.md#role-prywatność-i-uprawnienia--ustalenia-07).
 - [x] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych. Użytkownik potwierdził format kart MYRA, kod rodzaju `same_as = 10`, reguły relacji, osobne wielokrotne wpisy wpływu, PostgreSQL, liczbowe ID i typ, Markdown w rekordach, zachowanie wersji oraz pierwszy poprawny zapis wygrywający konflikt. Ustalenia: [PROJECT.md — Dane i zapis](PROJECT.md#dane-i-zapis--ustalenia-08).
 - [x] 0.9 Uzupełnij AGENTS.md o zasady Git, granice warstw, weryfikację i warunki ukończenia zadania. Ustalenia: [AGENTS.md](AGENTS.md).
-- [ ] 0.10 Rozszerz checklistę kryteriów o warunki akceptacji, status i dowód realizacji.
+- [x] 0.10 Rozszerz checklistę kryteriów o warunki akceptacji, status i dowód realizacji. Wariant B: tabela zbiorcza i opisy 36 kryteriów z weryfikacją oraz powiązaniami TODO w [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
 - [ ] 0.11 Wyjaśnij dopuszczalność zewnętrznej biblioteki grafowej przed jej wyborem.
 
 **Warunek ukończenia:** zakres, nawigacja i podstawowy model są zapisane; nie ma niejawnych decyzji wymagających zgadywania przez agenta. Szczegółowe migracje powstają przy odpowiednich modułach.
