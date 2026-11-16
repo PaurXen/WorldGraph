@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — WorldGraph
 
-> Dokument planowanej architektury aplikacji. Dostępny jest statyczny szablon strony startowej i lokalne środowisko Docker Compose; kod backendu nie został jeszcze rozpoczęty.
+> Dokument planowanej architektury aplikacji. Dostępny jest punkt wejścia PHP wyświetlający istniejący szablon strony startowej oraz lokalne środowisko Docker Compose. Router i klasy warstw backendu pozostają do implementacji.
 
 ## Zakładany stos
 - PHP (backend obiektowy), PostgreSQL, HTML/CSS, JavaScript.
@@ -178,4 +178,4 @@ Ukończenie 0.8 oznacza zapisanie i sprawdzenie zatwierdzonych formatów i regu�
 - Na mobile graf powinien mieć alternatywną listę relacji.
 
 ## Status
-Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. `public/index.html` i `public/assets/css/style.css` tworzą responsywny szablon strony startowej z przykładowym grafem SVG. Nie ma jeszcze klas backendu, API, SQL ani schematu bazy aplikacji.
+Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. `public/index.php` podłącza autoloader Composera i obsługuje `/` oraz `/index.php`, wysyłając istniejący `public/index.html` przez `readfile()`. Style pochodzą z `public/assets/css/style.css`; treść i przykładowy graf SVG pozostają statyczne. `/index.html` jest nadal dostępny bezpośrednio bez PHP. Przeniesienie treści do szablonu należy do 1.7; router i przekazywanie pozostałych tras do PHP należą do 1.3–1.4. Nie ma jeszcze klas backendu, API, SQL ani schematu bazy aplikacji.

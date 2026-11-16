@@ -2,7 +2,7 @@
 
 Szkielet repozytorium aplikacji do organizacji i analizy spójności fikcyjnych światów.
 
-**Aktualny status: statyczny szablon strony startowej, dokumentacja, szkielet katalogów i lokalne środowisko Docker Compose.** Nie ma jeszcze kodu backendu aplikacji ani schematu bazy danych.
+**Aktualny status: demonstracyjna strona startowa obsługiwana przez punkt wejścia PHP, autoloading Composer, dokumentacja, szkielet katalogów i lokalne środowisko Docker Compose.** Router, klasy warstw backendu i schemat bazy aplikacji pozostają do implementacji.
 
 - [Założenia projektu](PROJECT.md)
 - [Plan architektury](ARCHITECTURE.md)
@@ -40,9 +40,11 @@ Wymagania: Docker Desktop uruchomiony w trybie kontenerów Linux, z Docker Compo
    docker compose exec php composer install --no-interaction
    ```
 
-Adres serwera: <http://localhost:8080> (lub port z `.env`). Stronę startową stanowi responsywny szablon `public/index.html`, ze stylami w `public/assets/css/style.css`. Zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria. Linki prowadzą do sekcji na tej samej stronie. Szablon nie wymaga instalowania bibliotek ani przebudowy kontenerów.
+Adres serwera: <http://localhost:8080> (lub port z `.env`). Żądania `/` i `/index.php` obsługuje `public/index.php`: podłącza autoloader Composera i wysyła zawartość istniejącego `public/index.html` jako HTML w UTF-8. Treść jest odczytywana ze stałej ścieżki przez `readfile()`. Style nadal pochodzą z `public/assets/css/style.css`. Strona zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria; linki prowadzą do sekcji na tej samej stronie.
 
-Przedstawione postacie i powiązania są danymi demonstracyjnymi. Backend i routing aplikacji pozostają do implementacji.
+Bezpośredni adres `/index.html` nadal udostępnia ten sam plik statycznie, bez PHP. To rozwiązanie przejściowe do przeniesienia treści do szablonu w 1.7. Obecna konfiguracja Nginx wybiera `index.php` przed `index.html`; dodanie punktu wejścia nie wymaga jej zmiany ani przebudowy obrazu.
+
+Przedstawione postacie i powiązania są danymi demonstracyjnymi. Router i przekazywanie pozostałych tras aplikacji do PHP należą do 1.3–1.4; nieznane ścieżki nadal otrzymują 404 z Nginx. Klasy backendu i połączenie aplikacji z bazą pozostają do implementacji.
 
 ## Composer i ładowanie klas PHP
 
@@ -50,7 +52,7 @@ Composer jest dostępny w istniejącym kontenerze `php`; nie wymaga instalacji P
 
 Autoloading PSR-4 mapuje przestrzeń nazw `WorldGraph\` na katalog `src/`. Przykładowa przyszła klasa `WorldGraph\Controller\HomeController` będzie odpowiadać plikowi `src/Controller/HomeController.php`. Wielkość liter nazw katalogów, plików i klas musi się zgadzać. Obecnie katalogi zawierają tylko szkielet; klasy będą dodawane wraz z odpowiednimi modułami.
 
-Polecenie `composer install` generuje `vendor/autoload.php`. Ten plik zostanie podłączony w punkcie wejścia aplikacji w zadaniu 1.2. Katalog `vendor/` jest ignorowany przez Git, a `composer.json` i wygenerowany `composer.lock` należy wersjonować. Dane robocze Composera pozostają w ignorowanym `storage/cache/composer/`.
+Polecenie `composer install` generuje `vendor/autoload.php`, podłączany przez `public/index.php`. Katalog `vendor/` jest ignorowany przez Git, a `composer.json` i wygenerowany `composer.lock` należy wersjonować. Dane robocze Composera pozostają w ignorowanym `storage/cache/composer/`.
 
 ```sh
 docker compose exec php composer --version
@@ -110,5 +112,12 @@ Po dodaniu strony startowej sprawdzono odpowiedzi HTTP 200 dla `/` i arkusza CSS
 - Wykonano `composer install --no-interaction`, wygenerowano `composer.lock` bez zewnętrznych pakietów i ponowiono instalację z tego pliku. Przeszły `composer validate --strict`, `composer check-platform-reqs`, `composer dump-autoload` i kontrola składni `vendor/autoload.php`.
 - Sprawdzono mapowanie PSR-4 oraz rzeczywiste załadowanie tymczasowej klasy z `src/Core/`; nieistniejąca klasa poprawnie nie została załadowana. Plik testowy usunięto po sprawdzeniu.
 - Strona `/` i `/assets/css/style.css` zwróciły HTTP 200; `/composer.json` i `/vendor/autoload.php` zwróciły HTTP 404.
+
+16 listopada 2026 zweryfikowano zadanie 1.2:
+
+- `docker compose exec -T php php -l public/index.php` nie wykazało błędów składni.
+- Wywołanie punktu wejścia w CLI potwierdziło rejestrację autoloadera Composera i zgodność wyniku z istniejącym HTML także przy innym katalogu roboczym.
+- `/`, `/index.php`, `/index.html` i `/assets/css/style.css` zwróciły HTTP 200. Odpowiedzi miały właściwy typ treści, a ich bajty odpowiadały istniejącym plikom HTML i CSS; odpowiedzi PHP miały kodowanie UTF-8.
+- Nieznana ścieżka zwróciła HTTP 404 z dotychczasowej obsługi Nginx.
 
 Dokumentacja użytych mechanizmów: [kolejność uruchamiania Compose](https://docs.docker.com/compose/how-tos/startup-order/), [oficjalny obraz PHP](https://hub.docker.com/_/php), [oficjalny obraz PostgreSQL i wolumeny](https://hub.docker.com/_/postgres).
