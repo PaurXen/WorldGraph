@@ -10,6 +10,7 @@ Wskazówki dla agenta programistycznego pracującego nad tym repozytorium.
 - Przed większą zmianą zaproponuj zakres i listę plików, których dotknie.
 - Realizuj już zlecony zakres bez ponownego pytania o tę samą zgodę. Rutynowe szczegóły wykonania w ramach zlecenia rozstrzygaj samodzielnie; zmiany zakresu lub zatwierdzonych reguł produktu uzgodnij z użytkownikiem.
 - Nie dodawaj komentarzy odwołujących się do promtów.
+- Nie wykraczaj poza środowisko projektowe/folder.
 
 ## Zasady docelowe
 

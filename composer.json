@@ -1,0 +1,14 @@
+{
+    "name": "worldgraph/worldgraph",
+    "description": "Application for organizing fictional worlds and their connections.",
+    "type": "project",
+    "license": "Apache-2.0",
+    "require": {
+        "php": "^8.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "WorldGraph\\": "src/"
+        }
+    }
+}

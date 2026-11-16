@@ -6,6 +6,7 @@ Szkielet repozytorium aplikacji do organizacji i analizy spójności fikcyjnych 
 
 - [Założenia projektu](PROJECT.md)
 - [Plan architektury](ARCHITECTURE.md)
+- [Widoki interfejsu w Figma — desktop i mobile](https://www.figma.com/design/uJj1UDCTmQoMBmMxnDGXqg/WorldGraph-%E2%80%94-All-Stitch-Views?node-id=18-42)
 - [Instrukcje dla agentów](AGENTS.md)
 - [Lista 36 kryteriów zaliczenia](docs/REQUIREMENTS.md)
 
@@ -33,16 +34,39 @@ Wymagania: Docker Desktop uruchomiony w trybie kontenerów Linux, z Docker Compo
    docker compose ps
    ```
 
+4. Wygeneruj autoloading PHP przy pierwszym uruchomieniu i po zmianie `composer.lock`:
+
+   ```sh
+   docker compose exec php composer install --no-interaction
+   ```
+
 Adres serwera: <http://localhost:8080> (lub port z `.env`). Stronę startową stanowi responsywny szablon `public/index.html`, ze stylami w `public/assets/css/style.css`. Zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria. Linki prowadzą do sekcji na tej samej stronie. Szablon nie wymaga instalowania bibliotek ani przebudowy kontenerów.
 
 Przedstawione postacie i powiązania są danymi demonstracyjnymi. Backend i routing aplikacji pozostają do implementacji.
+
+## Composer i ładowanie klas PHP
+
+Composer jest dostępny w istniejącym kontenerze `php`; nie wymaga instalacji PHP ani Composera na hoście. Konfiguracja w `composer.json` wymaga PHP `^8.5` i nie dodaje zewnętrznych bibliotek.
+
+Autoloading PSR-4 mapuje przestrzeń nazw `WorldGraph\` na katalog `src/`. Przykładowa przyszła klasa `WorldGraph\Controller\HomeController` będzie odpowiadać plikowi `src/Controller/HomeController.php`. Wielkość liter nazw katalogów, plików i klas musi się zgadzać. Obecnie katalogi zawierają tylko szkielet; klasy będą dodawane wraz z odpowiednimi modułami.
+
+Polecenie `composer install` generuje `vendor/autoload.php`. Ten plik zostanie podłączony w punkcie wejścia aplikacji w zadaniu 1.2. Katalog `vendor/` jest ignorowany przez Git, a `composer.json` i wygenerowany `composer.lock` należy wersjonować. Dane robocze Composera pozostają w ignorowanym `storage/cache/composer/`.
+
+```sh
+docker compose exec php composer --version
+docker compose exec php composer validate --strict
+docker compose exec php composer check-platform-reqs
+docker compose exec php composer dump-autoload
+```
+
+`dump-autoload` odświeża mapowanie po zmianie sekcji `autoload`. Dodawanie klas w już zmapowanym `src/` nie wymaga ponownego generowania przy obecnej konfiguracji. Po pobraniu zmian zależności wykonuj `install`; `update` służy do świadomej zmiany ich wersji.
 
 ## Kontenery i dane
 
 | Usługa | Przeznaczenie |
 |---|---|
 | `nginx` | Serwer HTTP, dostępny wyłącznie lokalnie; udostępnia tylko `public/`. |
-| `php` | PHP 8.5-FPM z rozszerzeniem `pdo_pgsql` i ustawieniami deweloperskimi. Kod jest montowany z repozytorium, więc jego zmiany nie wymagają przebudowy obrazu. |
+| `php` | PHP 8.5-FPM z rozszerzeniem `pdo_pgsql`, Composerem 2 i ustawieniami deweloperskimi. Kod jest montowany z repozytorium, więc jego zmiany nie wymagają przebudowy obrazu. |
 | `db` | PostgreSQL 18; start PHP czeka na gotowość bazy sprawdzaną przez `pg_isready`. |
 
 PHP otrzymuje zmienne `DB_HOST=db`, `DB_PORT=5432`, `DB_NAME`, `DB_USER` i `DB_PASSWORD`. Nazwa bazy, użytkownik i hasło pochodzą z `POSTGRES_*` w `.env`. PostgreSQL i PHP-FPM są dostępne w sieci Compose, bez publikowania ich portów na hoście.
@@ -79,5 +103,12 @@ Konfigurację infrastruktury zweryfikowano lokalnie 2 listopada 2026, przed doda
 Pliki użyte do sprawdzenia HTTP zostały usunięte po teście. To weryfikacja środowiska, nie funkcjonalności planowanej aplikacji.
 
 Po dodaniu strony startowej sprawdzono odpowiedzi HTTP 200 dla `/` i arkusza CSS, poprawność celów odnośników do sekcji oraz układ w Chrome przy szerokościach 320, 390, 768, 1024 i 1440 px. Nie stwierdzono poziomego przewijania ani elementów wychodzących poza szerokość strony.
+
+16 listopada 2026 zweryfikowano zadanie 1.1 w kontenerze PHP 8.5.12 z Composerem 2.11.2:
+
+- Zbudowano końcowy obraz PHP i uruchomiono istniejące usługi Compose.
+- Wykonano `composer install --no-interaction`, wygenerowano `composer.lock` bez zewnętrznych pakietów i ponowiono instalację z tego pliku. Przeszły `composer validate --strict`, `composer check-platform-reqs`, `composer dump-autoload` i kontrola składni `vendor/autoload.php`.
+- Sprawdzono mapowanie PSR-4 oraz rzeczywiste załadowanie tymczasowej klasy z `src/Core/`; nieistniejąca klasa poprawnie nie została załadowana. Plik testowy usunięto po sprawdzeniu.
+- Strona `/` i `/assets/css/style.css` zwróciły HTTP 200; `/composer.json` i `/vendor/autoload.php` zwróciły HTTP 404.
 
 Dokumentacja użytych mechanizmów: [kolejność uruchamiania Compose](https://docs.docker.com/compose/how-tos/startup-order/), [oficjalny obraz PHP](https://hub.docker.com/_/php), [oficjalny obraz PostgreSQL i wolumeny](https://hub.docker.com/_/postgres).

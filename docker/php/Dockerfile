@@ -6,4 +6,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 
+COPY --from=composer/composer:2-bin /composer /usr/local/bin/composer
+
+ENV COMPOSER_HOME=/var/www/html/storage/cache/composer
+
 WORKDIR /var/www/html

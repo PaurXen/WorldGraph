@@ -43,7 +43,7 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 
 Zależność: etap 0.
 
-- [ ] 1.1 Dodaj Composer, przestrzenie nazw i autoloading.
+- [x] 1.1 Dodaj Composer, przestrzenie nazw i autoloading. Composer 2 w kontenerze PHP; PSR-4 `WorldGraph\` → `src/`. Instrukcja: [README.md — Composer](README.md#composer-i-ładowanie-klas-php); wyniki: [weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
 - [ ] 1.2 Utwórz public/index.php jako punkt wejścia.
 - [ ] 1.3 Dodaj router: metody HTTP, trasy statyczne, regex, parametry ścieżki i query.
 - [ ] 1.4 Skonfiguruj Nginx do przekazywania tras aplikacji do front controllera.
