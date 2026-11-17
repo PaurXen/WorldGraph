@@ -2,6 +2,16 @@
 
 Wskazówki dla agenta programistycznego pracującego nad tym repozytorium.
 
+## Spis treści
+
+- [Zakres pracy](#zakres-pracy)
+- [Zasady docelowe](#zasady-docelowe)
+- [Git i ochrona zmian](#git-i-ochrona-zmian)
+- [Granice warstw](#granice-warstw)
+- [Weryfikacja](#weryfikacja)
+- [Warunki ukończenia zadania](#warunki-ukończenia-zadania)
+- [Reguła najważniejsza](#reguła-najważniejsza)
+
 ## Zakres pracy
 
 - Najpierw zapoznaj się z [PROJECT.md](PROJECT.md), [ARCHITECTURE.md](ARCHITECTURE.md), [TODO.md](TODO.md) i [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).

@@ -2,6 +2,45 @@
 
 > Dokument zatwierdzonego celu, zakresu MVP, nawigacji, uprawnień i struktury danych (punkty 0.2–0.4 oraz 0.6–0.8 TODO). Ustalenia 0.7 rozszerzają MVP o role Twórcy i Custom, trzy poziomy prywatności, komentarze oraz historię zmian danych i plików świata. W 0.8 zatwierdzono format kart oparty na MYRA, reguły relacji i wpływu postaci, sposób zapisu, usuwania i zachowania wersji oraz rozstrzygania równoległych edycji. Podstawowe MVP nadal obejmuje etapy 1–9; etap 10 stanowi extended MVP. Dokument opisuje plan produktu; aktualny stan implementacji przedstawia README.md.
 
+## Spis treści
+
+- [Problem](#problem)
+- [Cel produktu](#cel-produktu)
+- [Odbiorcy](#odbiorcy)
+- [Organizacja projektu i dostęp](#organizacja-projektu-i-dostęp)
+- [Zatwierdzony zakres MVP — etapy 1–9](#zatwierdzony-zakres-mvp--etapy-19)
+- [Role, prywatność i uprawnienia — ustalenia 0.7](#role-prywatność-i-uprawnienia--ustalenia-07)
+  - [Role w świecie](#role-w-świecie)
+  - [Prywatność i dostęp bez członkostwa](#prywatność-i-dostęp-bez-członkostwa)
+  - [Macierz operacji](#macierz-operacji)
+  - [Katalog parametrów](#katalog-parametrów)
+  - [Reguły łączenia i egzekwowania uprawnień](#reguły-łączenia-i-egzekwowania-uprawnień)
+  - [Historia zmian i wersje w MVP](#historia-zmian-i-wersje-w-mvp)
+  - [Warunek ukończenia 0.7](#warunek-ukończenia-07)
+- [Dane i zapis — ustalenia 0.8](#dane-i-zapis--ustalenia-08)
+  - [Zatwierdzone decyzje](#zatwierdzone-decyzje)
+  - [Format karty zatwierdzony na podstawie MYRA](#format-karty-zatwierdzony-na-podstawie-myra)
+  - [Początkowe rodzaje i reguły relacji](#początkowe-rodzaje-i-reguły-relacji)
+  - [Osobne wpisy wpływu postaci](#osobne-wpisy-wpływu-postaci)
+  - [Usuwanie bieżącej treści i zachowanie historii](#usuwanie-bieżącej-treści-i-zachowanie-historii)
+  - [Warunek ukończenia 0.8](#warunek-ukończenia-08)
+- [Strony i nawigacja](#strony-i-nawigacja)
+  - [Mapa stron](#mapa-stron)
+  - [Wspólna nawigacja i widok projektu](#wspólna-nawigacja-i-widok-projektu)
+  - [Podstawowe przejścia](#podstawowe-przejścia)
+  - [Granice ustaleń 0.3](#granice-ustaleń-03)
+- [Zakładki projektu — ustalenia 0.4](#zakładki-projektu--ustalenia-04)
+  - [Zawartość i adresy](#zawartość-i-adresy)
+  - [Widoki zakładki Graf](#widoki-zakładki-graf)
+  - [Układ inspirowany GitHubem](#układ-inspirowany-githubem)
+  - [TBI, dostęp i puste stany](#tbi-dostęp-i-puste-stany)
+- [Odniesienie do szkicu MYRA](#odniesienie-do-szkicu-myra)
+- [Warunek ukończenia MVP](#warunek-ukończenia-mvp)
+- [Extended MVP — etap 10](#extended-mvp--etap-10)
+- [Dalsze etapy projektu](#dalsze-etapy-projektu)
+- [Funkcje odłożone poza pierwszą wersję](#funkcje-odłożone-poza-pierwszą-wersję)
+- [Realizacja na WdPAI](#realizacja-na-wdpai)
+
 ## Problem
 Twórcy rozbudowanych uniwersów przechowują informacje o postaciach, miejscach, frakcjach i fabule w wielu notatkach. Utrudnia to porządkowanie wiedzy, odnajdywanie powiązań i planowanie dalszego przebiegu historii. Współpraca wymaga również jasnego określenia, kto może przeglądać i edytować materiały.
 

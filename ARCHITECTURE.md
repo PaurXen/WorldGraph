@@ -1,6 +1,24 @@
 # ARCHITECTURE.md — WorldGraph
 
-> Dokument planowanej architektury aplikacji. Dostępny jest punkt wejścia PHP, własny router, przekazywanie tras przez Nginx, testy i istniejący szablon strony startowej oraz lokalne środowisko Docker Compose. Kontrolery i warstwy biznesowe pozostają do implementacji.
+> Dokument planowanej architektury aplikacji. Dostępny jest punkt wejścia PHP, własny router, przekazywanie tras przez Nginx, bazowy kontroler, kontroler strony głównej, wspólne renderowanie i testy w lokalnym środowisku Docker Compose. Layout, pełna migracja HTML i warstwy biznesowe pozostają do implementacji.
+
+## Spis treści
+
+- [Zakładany stos](#zakładany-stos)
+- [Biblioteka grafowa — ustalenia 0.11](#biblioteka-grafowa--ustalenia-011)
+- [Planowany przepływ](#planowany-przepływ)
+- [Planowany model pojęciowy](#planowany-model-pojęciowy)
+  - [Pojęcia](#pojęcia)
+  - [Własność i członkostwo](#własność-i-członkostwo)
+  - [Powiązania i liczności](#powiązania-i-liczności)
+  - [Izolacja i wspólne dane](#izolacja-i-wspólne-dane)
+  - [Zatwierdzone decyzje strukturalne — ustalenia 0.8](#zatwierdzone-decyzje-strukturalne--ustalenia-08)
+  - [Egzekwowanie uprawnień — ustalenia 0.7](#egzekwowanie-uprawnień--ustalenia-07)
+  - [Historia zmian i wersje w podstawowym MVP](#historia-zmian-i-wersje-w-podstawowym-mvp)
+  - [Powiązanie z widokami MYRA i zakresem MVP](#powiązanie-z-widokami-myra-i-zakresem-mvp)
+  - [Granice ustaleń 0.6–0.8](#granice-ustaleń-0608)
+- [Zasady projektowe](#zasady-projektowe)
+- [Status](#status)
 
 ## Zakładany stos
 - PHP (backend obiektowy), PostgreSQL, HTML/CSS, JavaScript.
@@ -31,9 +49,11 @@ W 0.11 nie wybieramy konkretnej biblioteki, nie instalujemy zależności i nie d
 - `templates`: widoki HTML.
 - `public/assets`: statyczne pliki frontendu.
 
-W zadaniu 1.3 powstał `src/Core/Http/Router.php`, niezależny od superglobalnych zmiennych i wysyłania odpowiedzi. Rejestruje jawne metody oraz ścieżki statyczne lub regex, a wynik dopasowania zawiera funkcję obsługi, osobne parametry ścieżki i query oraz status i dozwolone metody. `public/index.php` odczytuje żądanie, korzysta z definicji w `config/routes.php`, ustawia status i wywołuje wybraną funkcję. Działa tylko dotychczasowa strona główna; obecna funkcja z `readfile()` będzie zastąpiona kontrolerem i szablonem w 1.5–1.7. Zasady dopasowania i polecenie testów opisuje [README — Routing](README.md#routing).
+W zadaniu 1.3 powstał `src/Core/Http/Router.php`, niezależny od superglobalnych zmiennych i wysyłania odpowiedzi. Rejestruje jawne metody oraz ścieżki statyczne lub regex, a wynik dopasowania zawiera funkcję obsługi, osobne parametry ścieżki i query oraz status i dozwolone metody. `public/index.php` odczytuje żądanie, korzysta z definicji w `config/routes.php`, ustawia status i wywołuje wybraną funkcję. Zasady dopasowania i polecenie testów opisuje [README — Routing](README.md#routing).
 
 W 1.4 Nginx przekazuje `/` bezpośrednio do punktu wejścia, a dla pozostałych adresów najpierw obsługuje istniejące pliki i katalogi. Gdy ich brakuje, wykonuje wewnętrzne przekazanie do `index.php` z zachowaniem oryginalnego URI, query i metody HTTP. Dlatego np. `OPTIONS /` rozstrzyga router, a niezarejestrowana trasa bez pliku otrzymuje PHP-owe 404. Ochrona ukrytych ścieżek i sprawdzanie istnienia skryptu PHP pozostają po stronie Nginx. Integrację sprawdza `tests/Integration/RoutingHttpTest.php` bez dodatkowych bibliotek i publicznych tras testowych.
+
+Wariant A z 1.5 dodaje `src/Controller/BaseController.php` i `HomeController.php`. Trasy wskazują `HomeController::index()`, który wywołuje wspólne `render('home')`. Renderer bazowego kontrolera odczytuje wyłącznie widoki z `templates/`, sprawdza nazwę i rzeczywistą ścieżkę oraz przekazuje tablicę `$data` w izolowanym zakresie bez `extract()`. Buforuje wynik i sprząta bufory po wyjątku; PHP szablonu pozostaje zaufanym kodem, a kodowanie danych w HTML jest odpowiedzialnością widoku. `templates/home.php` przejściowo odczytuje istniejący HTML, dzięki czemu nie powstaje druga kopia treści. Layout i pełne przeniesienie treści pozostają w 1.6–1.7; pełna obsługa wyjątków w 1.8. Szczegóły i testy: [README — Kontrolery i widoki](README.md#kontrolery-i-widoki).
 
 ## Planowany model pojęciowy
 
@@ -182,4 +202,4 @@ Ukończenie 0.8 oznacza zapisanie i sprawdzenie zatwierdzonych formatów i regu�
 - Na mobile graf powinien mieć alternatywną listę relacji.
 
 ## Status
-Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. Nginx kieruje trasy aplikacji do `public/index.php`, który podłącza autoloader Composera i router. Definicje w `config/routes.php` obsługują GET/HEAD dla `/` i `/index.php`, wysyłając istniejący `public/index.html` przez `readfile()`. Style pochodzą z `public/assets/css/style.css`; treść i przykładowy graf SVG pozostają statyczne. `/index.html` jest nadal dostępny bezpośrednio bez PHP. Przeniesienie treści do szablonu należy do 1.7. Dostępne są testy dopasowań CLI i integracji HTTP; nie ma jeszcze kontrolerów, warstw biznesowych, API, SQL ani schematu bazy aplikacji.
+Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. Nginx kieruje trasy aplikacji do `public/index.php`, który podłącza autoloader Composera i router. Definicje w `config/routes.php` kierują GET/HEAD dla `/` i `/index.php` do `HomeController`. Wspólny renderer `BaseController` wyświetla `templates/home.php`, odczytujący istniejący `public/index.html`. Style pochodzą z `public/assets/css/style.css`; treść i przykładowy graf SVG pozostają statyczne. `/index.html` jest nadal dostępny bezpośrednio bez PHP. Layout i przeniesienie treści do szablonu należą do 1.6–1.7. Dostępne są testy routera, kontrolerów i integracji HTTP; nie ma jeszcze warstw biznesowych, API, SQL ani schematu bazy aplikacji.

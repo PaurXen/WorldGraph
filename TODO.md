@@ -2,6 +2,27 @@
 
 Plan implementacji, wersja 2026-11-13.
 
+## Spis treści
+
+- [Zasady pracy](#zasady-pracy)
+- [Zakres roboczy](#zakres-roboczy)
+- [0. Ustalenia i dokumentacja](#0-ustalenia-i-dokumentacja)
+- [1. Szkielet aplikacji PHP](#1-szkielet-aplikacji-php)
+- [2. Wspólny interfejs](#2-wspólny-interfejs)
+- [3. Baza danych i konta](#3-baza-danych-i-konta)
+- [4. Biblioteka i światy](#4-biblioteka-i-światy)
+- [5. Karty elementów świata](#5-karty-elementów-świata)
+- [6. Relacje](#6-relacje)
+- [7. Interaktywny graf](#7-interaktywny-graf)
+- [8. Prywatność, udostępnianie i Odkrywaj](#8-prywatność-udostępnianie-i-odkrywaj)
+- [9. Wydarzenia i chronologia](#9-wydarzenia-i-chronologia)
+- [10. Kontrola spójności](#10-kontrola-spójności)
+- [11. Zaproszenia, poczta i CRON](#11-zaproszenia-poczta-i-cron)
+- [12. Finalizacja i wdrożenie](#12-finalizacja-i-wdrożenie)
+- [Poza pierwszą wersją](#poza-pierwszą-wersją)
+- [Szablon pojedynczego zadania dla agenta](#szablon-pojedynczego-zadania-dla-agenta)
+- [Źródła](#źródła)
+
 ## Zasady pracy
 
 - Ten dokument jest planem, nie poleceniem wykonania całej aplikacji.
@@ -47,7 +68,7 @@ Zależność: etap 0.
 - [x] 1.2 Utwórz public/index.php jako punkt wejścia. Wariant A: autoloader Composera i istniejący HTML odczytywany ze stałej ścieżki, bez routera ani przenoszenia treści do szablonu. Wyniki: [README.md — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
 - [x] 1.3 Dodaj router: metody HTTP, trasy statyczne, regex, parametry ścieżki i query. Wariant A: własny Router z jawnymi regex, osobnymi parametrami i query oraz 22 scenariuszami CLI. W aplikacji tylko istniejąca strona główna; przekazywanie innych tras przez Nginx opisuje punkt 1.4. Instrukcja: [README — Routing](README.md#routing); wyniki z 2026-11-17 w sekcji weryfikacji.
 - [x] 1.4 Skonfiguruj Nginx do przekazywania tras aplikacji do front controllera. Wariant A: osobna reguła dla `/`, istniejące pliki obsługiwane bezpośrednio, pozostałe trasy przekazywane do `index.php` z metodą i query. Sprawdzono konfigurację i 22 scenariusze HTTP. Instrukcja i wyniki z 2026-11-17: [README — Routing](README.md#routing).
-- [ ] 1.5 Dodaj bazowy kontroler i wspólne renderowanie widoków.
+- [x] 1.5 Dodaj bazowy kontroler i wspólne renderowanie widoków. Wariant A: BaseController, HomeController i przejściowy templates/home.php, z ograniczeniem ścieżek do templates i jawną tablicą danych. Sprawdzono 19 scenariuszy kontrolerów oraz dotychczasowe testy routera i HTTP. Layout i pełna migracja HTML pozostają w 1.6–1.7. Instrukcja i wyniki z 2026-11-17: [README — Kontrolery i widoki](README.md#kontrolery-i-widoki).
 - [ ] 1.6 Utwórz layout i współdzielone elementy nawigacji, nagłówka oraz stopki.
 - [ ] 1.7 Przenieś istniejącą stronę startową do szablonu bez niepotrzebnego przeprojektowania.
 - [ ] 1.8 Dodaj kontrolowane odpowiedzi 400/404/405 oraz bezpieczną obsługę nieoczekiwanych błędów.

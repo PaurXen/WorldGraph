@@ -2,11 +2,54 @@
 
 **Warunek krytyczny:** obiektowy backend PHP. Punktacja według otrzymanej listy: maksymalnie 36 pkt; 5.0 od 34 pkt. Status w tej checkliście nie jest przyznaniem punktów ani oceną.
 
+## Spis treści
+
+- [Zasady statusów i dowodów](#zasady-statusów-i-dowodów)
+- [Tabela zbiorcza](#tabela-zbiorcza)
+- [Szczegóły kryteriów](#szczegóły-kryteriów)
+  - [1. Dokumentacja w README.md](#1-dokumentacja-w-readmemd)
+  - [2. Docker](#2-docker)
+  - [3. Architektura aplikacji](#3-architektura-aplikacji)
+  - [4. Routing](#4-routing)
+  - [5. Obiektowy backend](#5-obiektowy-backend)
+  - [6. Diagram ERD w Mermaid](#6-diagram-erd-w-mermaid)
+  - [7. Git](#7-git)
+  - [8. Realizacja tematu](#8-realizacja-tematu)
+  - [9. HTML](#9-html)
+  - [10. PostgreSQL](#10-postgresql)
+  - [11. Złożoność bazy danych](#11-złożoność-bazy-danych)
+  - [12. Eksport bazy do pliku .sql](#12-eksport-bazy-do-pliku-sql)
+  - [13. PHP](#13-php)
+  - [14. JavaScript](#14-javascript)
+  - [15. Fetch API (AJAX)](#15-fetch-api-ajax)
+  - [16. Design](#16-design)
+  - [17. Responsywność](#17-responsywność)
+  - [18. Tryb dark/light mode](#18-tryb-darklight-mode)
+  - [19. Zgodność z WCAG](#19-zgodność-z-wcag)
+  - [20. Logowanie](#20-logowanie)
+  - [21. Sesja użytkownika](#21-sesja-użytkownika)
+  - [22. Uprawnienia użytkowników](#22-uprawnienia-użytkowników)
+  - [23. Role użytkowników](#23-role-użytkowników)
+  - [24. Wylogowywanie](#24-wylogowywanie)
+  - [25. Widoki, wyzwalacze, funkcje lub transakcje](#25-widoki-wyzwalacze-funkcje-lub-transakcje)
+  - [26. Akcje na referencjach](#26-akcje-na-referencjach)
+  - [27. Security Bingo](#27-security-bingo)
+  - [28. Brak replikacji kodu](#28-brak-replikacji-kodu)
+  - [29. Czystość i przejrzystość kodu](#29-czystość-i-przejrzystość-kodu)
+  - [30. Tłumaczenia](#30-tłumaczenia)
+  - [31. Testy jednostkowe](#31-testy-jednostkowe)
+  - [32. CRON](#32-cron)
+  - [33. PHP Mailer](#33-php-mailer)
+  - [34. Upload zdjęcia](#34-upload-zdjęcia)
+  - [35. Zmienne w .env lub Key Vault](#35-zmienne-w-env-lub-key-vault)
+  - [36. Deploy](#36-deploy)
+- [Źródła i kwestie do doprecyzowania](#źródła-i-kwestie-do-doprecyzowania)
+
 ## Zasady statusów i dowodów
 
 Przegląd dokumentacyjny: **2026-11-13**.
 
-Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
+Aktualizacja dowodów dotyczących TODO 1.3–1.5: **2026-11-17**.
 
 | Status | Znaczenie |
 |---|---|
@@ -29,9 +72,9 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 |---:|---|---|---|
 | 1 | [Dokumentacja w README.md](#1-dokumentacja-w-readmemd) | Częściowo | [README](../README.md) opisuje środowisko i szablon. |
 | 2 | [Docker](#2-docker) | Do weryfikacji | [Compose](../compose.yaml) i historyczne sprawdzenia w README. |
-| 3 | [Architektura aplikacji](#3-architektura-aplikacji) | Częściowo | Istnieją [plan architektury](../ARCHITECTURE.md) i [router](../src/Core/Http/Router.php); warstwy funkcjonalne pozostają do implementacji. |
+| 3 | [Architektura aplikacji](#3-architektura-aplikacji) | Częściowo | Istnieją [plan architektury](../ARCHITECTURE.md), [router](../src/Core/Http/Router.php), [kontroler strony głównej](../src/Controller/HomeController.php) i [wspólne renderowanie](../src/Controller/BaseController.php); warstwy biznesowe pozostają do implementacji. |
 | 4 | [Routing](#4-routing) | Częściowo | Istnieją [router](../src/Core/Http/Router.php), [przekazywanie tras przez Nginx](../docker/nginx/default.conf) oraz testy [CLI](../tests/Unit/RouterTest.php) i [HTTP](../tests/Integration/RoutingHttpTest.php); chronione przepływy i pełna obsługa błędów są dalszymi zadaniami. |
-| 5 | [Obiektowy backend](#5-obiektowy-backend) | TODO | [Router](../src/Core/Http/Router.php) jest pierwszą klasą; brak współpracujących warstw i przypadków biznesowych. |
+| 5 | [Obiektowy backend](#5-obiektowy-backend) | TODO | Współpracują [Router](../src/Core/Http/Router.php), [HomeController](../src/Controller/HomeController.php) i [BaseController](../src/Controller/BaseController.php); brak warstw Service, Repository i Domain oraz przypadków biznesowych. |
 | 6 | [Diagram ERD w Mermaid](#6-diagram-erd-w-mermaid) | Częściowo | [Diagram pojęciowy](../ARCHITECTURE.md#powiązania-i-liczności), bez schematu bazy. |
 | 7 | [Git](#7-git) | Częściowo | Repozytorium i historia istnieją; [zasady Git](../AGENTS.md#git-i-ochrona-zmian). |
 | 8 | [Realizacja tematu](#8-realizacja-tematu) | Częściowo | [Zakres produktu](../PROJECT.md) i demonstracja, bez funkcji aplikacji. |
@@ -39,7 +82,7 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 | 10 | [PostgreSQL](#10-postgresql) | Częściowo | [Kontener bazy](../compose.yaml); brak tabel aplikacji. |
 | 11 | [Złożoność bazy danych](#11-złożoność-bazy-danych) | Do doprecyzowania | Brak szczegółowego progu prowadzącego i schematu aplikacji. |
 | 12 | [Eksport bazy do pliku .sql](#12-eksport-bazy-do-pliku-sql) | TODO | Brak eksportu bazy aplikacji. |
-| 13 | [PHP](#13-php) | Częściowo | Istnieją [punkt wejścia PHP](../public/index.php), [router](../src/Core/Http/Router.php) i [testy CLI](../tests/Unit/RouterTest.php); operacje biznesowe pozostają do implementacji. |
+| 13 | [PHP](#13-php) | Częściowo | Istnieją [punkt wejścia PHP](../public/index.php), [router](../src/Core/Http/Router.php), [kontroler](../src/Controller/HomeController.php), [renderowanie widoków](../src/Controller/BaseController.php) i testy CLI; operacje biznesowe pozostają do implementacji. |
 | 14 | [JavaScript](#14-javascript) | TODO | Brak skryptów aplikacji; kryterium 14 oznacza JavaScript. |
 | 15 | [Fetch API (AJAX)](#15-fetch-api-ajax) | TODO | Brak działającego Fetch i endpointów aplikacji. |
 | 16 | [Design](#16-design) | Częściowo | [HTML](../public/index.html) i [CSS](../public/assets/css/style.css); status prototypu w TODO 0.5 to `[?]`. |
@@ -54,10 +97,10 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 | 25 | [Widoki, wyzwalacze, funkcje lub transakcje](#25-widoki-wyzwalacze-funkcje-lub-transakcje) | TODO | Brak mechanizmu użytego przez aplikację. |
 | 26 | [Akcje na referencjach](#26-akcje-na-referencjach) | TODO | Brak kluczy obcych i migracji aplikacji. |
 | 27 | [Security Bingo](#27-security-bingo) | Do doprecyzowania | Brak dokładnej karty Bingo od prowadzącego. |
-| 28 | [Brak replikacji kodu](#28-brak-replikacji-kodu) | TODO | Brak wspólnych widoków i modułów aplikacji. |
-| 29 | [Czystość i przejrzystość kodu](#29-czystość-i-przejrzystość-kodu) | Częściowo | Istnieją [kod routera](../src/Core/Http/Router.php), pliki statyczne i [zasady warstw](../AGENTS.md#granice-warstw). |
+| 28 | [Brak replikacji kodu](#28-brak-replikacji-kodu) | Częściowo | [BaseController](../src/Controller/BaseController.php) zapewnia renderowanie używane przez [HomeController](../src/Controller/HomeController.php); wspólny layout i nawigacja pozostają do wykonania. |
+| 29 | [Czystość i przejrzystość kodu](#29-czystość-i-przejrzystość-kodu) | Częściowo | Istnieją typowane [router](../src/Core/Http/Router.php) i [kontrolery](../src/Controller/BaseController.php), osobna konfiguracja tras, pliki statyczne i [zasady warstw](../AGENTS.md#granice-warstw). |
 | 30 | [Tłumaczenia](#30-tłumaczenia) | TODO | Strona statyczna jest po polsku; brak przełączania PL/EN. |
-| 31 | [Testy jednostkowe](#31-testy-jednostkowe) | TODO | Istnieje [skrypt testów routera](../tests/Unit/RouterTest.php); brak wymaganych testów reguł domenowych. |
+| 31 | [Testy jednostkowe](#31-testy-jednostkowe) | TODO | Istnieją skrypty testów [routera](../tests/Unit/RouterTest.php) i [kontrolera/renderowania](../tests/Unit/ControllerTest.php); brak wymaganych testów reguł domenowych. |
 | 32 | [CRON](#32-cron) | TODO | Brak zadania i potwierdzonego harmonogramu. |
 | 33 | [PHP Mailer](#33-php-mailer) | TODO | Brak wysyłki e-mail i konfiguracji SMTP aplikacji. |
 | 34 | [Upload zdjęcia](#34-upload-zdjęcia) | TODO | Brak formularza i obsługi uploadu ilustracji. |
@@ -84,7 +127,7 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 
 - **Warunek akceptacji:** Kod realizuje podział Controller, Service, Repository i Domain zgodnie z AGENTS oraz ARCHITECTURE; HTTP, reguły domenowe, autoryzacja i SQL mają przypisane odpowiedzialności.
 - **Weryfikacja:** Prześledzić rzeczywiste żądanie od routera do bazy i odpowiedzi oraz sprawdzić granice warstw w zmienionych modułach.
-- **Dowód:** Istnieją [plan architektury](../ARCHITECTURE.md#planowany-przepływ), [instrukcje warstw](../AGENTS.md#granice-warstw), [router](../src/Core/Http/Router.php) i [punkt wejścia PHP](../public/index.php). Nie ma jeszcze współpracujących warstw Controller, Service, Repository i Domain obsługujących operacje na danych aplikacji. Docelowo: implementacja warstw i opis prześledzonej operacji biznesowej.
+- **Dowód:** Istnieją [plan architektury](../ARCHITECTURE.md#planowany-przepływ), [instrukcje warstw](../AGENTS.md#granice-warstw), [router](../src/Core/Http/Router.php) i [punkt wejścia PHP](../public/index.php). W 1.5 [konfiguracja tras](../config/routes.php) wskazuje metodę `HomeController::index()`, która korzysta z `BaseController::render()` i [adaptera widoku](../templates/home.php) odczytującego istniejący HTML. Przepływ opisuje [README — Kontrolery i widoki](../README.md#kontrolery-i-widoki). Brak współpracujących warstw Service, Repository i Domain oraz operacji na danych aplikacji. Docelowo: implementacja warstw i opis prześledzonej operacji biznesowej.
 - **TODO:** 1.1–1.6, 0.9, 12.13; implementacja modułów 3–11.
 
 ### 4. Routing
@@ -98,7 +141,7 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 
 - **Warunek akceptacji:** Działające operacje aplikacji są realizowane przez współpracujące obiekty odpowiednich warstw; kod domenowy i przypadki użycia nie są zbiorem skryptów proceduralnych w szablonach.
 - **Weryfikacja:** Przejść rzeczywisty przypadek użycia, wskazać odpowiedzialności obiektów oraz testy jego reguł.
-- **Dowód:** Istnieje klasa [Router](../src/Core/Http/Router.php), używana przez [punkt wejścia](../public/index.php). Nie ma jeszcze współpracujących obiektów warstw Controller, Service, Repository i Domain realizujących przypadek biznesowy zgodny z [ARCHITECTURE](../ARCHITECTURE.md). Sam router nie spełnia tego kryterium; pozostaje ono warunkiem krytycznym.
+- **Dowód:** [Router](../src/Core/Http/Router.php) dopasowuje trasę, a [punkt wejścia](../public/index.php) wywołuje metodę obiektu [HomeController](../src/Controller/HomeController.php), który dziedziczy wspólne renderowanie z [BaseController](../src/Controller/BaseController.php). To rzeczywisty przepływ strony głównej, opisany w [README — Kontrolery i widoki](../README.md#kontrolery-i-widoki). Nie ma jeszcze współpracujących obiektów warstw Service, Repository i Domain realizujących przypadek biznesowy zgodny z [ARCHITECTURE](../ARCHITECTURE.md). Samo renderowanie strony nie spełnia całego kryterium; pozostaje ono warunkiem krytycznym.
 - **TODO:** 1.1–1.6, moduły 3–11, 12.13.
 
 ### 6. Diagram ERD w Mermaid
@@ -154,7 +197,7 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 
 - **Warunek akceptacji:** PHP obsługuje rzeczywiste żądania, walidację, operacje aplikacji i odpowiedzi, zgodnie z obiektową architekturą.
 - **Weryfikacja:** Sprawdzić składnię oraz rzeczywiste żądania i testy zmienionych przypadków użycia; wykazać wykonanie kodu PHP aplikacji.
-- **Dowód:** Istnieją [obraz PHP z pdo_pgsql](../docker/php/Dockerfile), [punkt wejścia](../public/index.php), [router](../src/Core/Http/Router.php) i [konfiguracja tras](../config/routes.php). Kod PHP wybiera obsługę strony demonstracyjnej i podstawowe statusy HTTP. Kontrola składni punktu wejścia, routera, konfiguracji tras oraz [skryptu testów routera](../tests/Unit/RouterTest.php) przeszła 17 listopada 2026; bieżący zakres sprawdzeń opisuje [README — Routing](../README.md#routing). Walidacja i operacje biznesowe we współpracujących warstwach pozostają do implementacji.
+- **Dowód:** Istnieją [obraz PHP z pdo_pgsql](../docker/php/Dockerfile), [punkt wejścia](../public/index.php), [router](../src/Core/Http/Router.php) i [konfiguracja tras](../config/routes.php). Kod PHP wybiera obsługę strony demonstracyjnej i podstawowe statusy HTTP. W 1.5 [HomeController](../src/Controller/HomeController.php) korzysta ze wspólnego [renderowania](../src/Controller/BaseController.php), a [widok home.php](../templates/home.php) odczytuje istniejącą treść strony. 17 listopada 2026 przeszły kontrole składni obu kontrolerów, widoku, konfiguracji tras i [skryptu testów kontrolera](../tests/Unit/ControllerTest.php), 19 scenariuszy kontrolera/renderowania bez pominięć, 22 scenariusze routera CLI i 22 scenariusze HTTP, w tym porównanie niezmienionej treści HTML/CSS. Polecenia i ograniczenia opisują [README — Routing](../README.md#routing) i [README — Kontrolery i widoki](../README.md#kontrolery-i-widoki). Walidacja i operacje biznesowe we współpracujących warstwach pozostają do implementacji.
 - **TODO:** 1.1–1.9, 3.1–3.10, kolejne moduły.
 
 ### 14. JavaScript
@@ -259,14 +302,14 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 
 - **Warunek akceptacji:** Powtarzalna nawigacja, renderowanie, walidacja i operacje mają wspólne miejsca odpowiednie dla warstw; nie ma niezależnych kopii tej samej reguły ani osobnych kopii kart dla każdego grafu.
 - **Weryfikacja:** Przejrzeć zmienione moduły i prześledzić wspólny fragment używany w kilku widokach lub operacjach, bez budowania abstrakcji na zapas.
-- **Dowód:** Obecny [HTML](../public/index.html) jest pojedynczym szablonem demonstracyjnym. Brak dowodu ponownego użycia w aplikacji. Docelowo: wspólne szablony/klasy i wynik przeglądu.
+- **Dowód:** [BaseController::render()](../src/Controller/BaseController.php) jest wspólnym miejscem wyboru, walidacji i buforowanego wykonania widoku; korzysta z niego [HomeController](../src/Controller/HomeController.php). [Adapter home.php](../templates/home.php) odczytuje istniejący [HTML](../public/index.html), więc treść strony nie została skopiowana. Zakres opisuje [README — Kontrolery i widoki](../README.md#kontrolery-i-widoki). Wspólny layout i nawigacja z 1.6 oraz przeniesienie treści z 1.7 pozostają do wykonania; brak dowodu współdzielenia pozostałych reguł i operacji aplikacji.
 - **TODO:** 1.5–1.7, 2.2–2.3, 12.13; przegląd kolejnych modułów.
 
 ### 29. Czystość i przejrzystość kodu
 
 - **Warunek akceptacji:** Kod ma jasne odpowiedzialności i nazwy, typowanie PHP, parametryzowane zapytania oraz kontrolowaną obsługę błędów, zgodnie z AGENTS. Opis dokumentacji odpowiada działającemu kodowi.
 - **Weryfikacja:** Wykonać przegląd zmienionych modułów, kontrolę składni i odpowiednie testy; sprawdzić diff pod kątem niezwiązanych zmian i sekretów.
-- **Dowód:** Istnieją [HTML](../public/index.html), [CSS](../public/assets/css/style.css), instrukcje pracy oraz typowany [router](../src/Core/Http/Router.php) z osobną [konfiguracją tras](../config/routes.php). Zakres bieżącej weryfikacji kodu routingu opisuje [README — Routing](../README.md#routing). Przegląd i sprawdzenia kolejnych modułów należy wykonywać wraz z ich implementacją.
+- **Dowód:** Istnieją [HTML](../public/index.html), [CSS](../public/assets/css/style.css), instrukcje pracy oraz typowane [router](../src/Core/Http/Router.php) i [kontrolery](../src/Controller/BaseController.php) z osobną [konfiguracją tras](../config/routes.php). `HomeController` wybiera widok; `BaseController` sprawdza nazwę i rzeczywistą ścieżkę w stałym katalogu `templates/`, przekazuje dane jako tablicę `$data` w odizolowanym zakresie i buforuje wynik. Zakres weryfikacji opisują [README — Routing](../README.md#routing) i [README — Kontrolery i widoki](../README.md#kontrolery-i-widoki). Przegląd i sprawdzenia kolejnych modułów należy wykonywać wraz z ich implementacją.
 - **TODO:** 0.9, 1.1–1.9, 12.13; weryfikacja na bieżąco.
 
 ### 30. Tłumaczenia
@@ -280,7 +323,7 @@ Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 
 - **Warunek akceptacji:** Istnieją izolowane testy rzeczywistych reguł domenowych, obejmujące przypadki poprawne, błędne i graniczne. Są powtarzalne i nie opierają wyniku na danych użytkownika.
 - **Weryfikacja:** Uruchomić udokumentowane polecenie testów i zachować wynik; sprawdzić, jakie zachowanie badają i czy odróżniają błąd od poprawnej realizacji.
-- **Dowód:** Istnieje samodzielny [skrypt testów routera](../tests/Unit/RouterTest.php), uruchamiany przez PHP CLI bez nowego frameworka. Polecenie i zakres są w [README — Routing](../README.md#routing); 17 listopada 2026 przeszły 22 scenariusze. Testy infrastruktury HTTP nie zastępują wymaganych testów rzeczywistych reguł domenowych, które powstaną wraz z modułami.
+- **Dowód:** Istnieją samodzielne skrypty testów [routera](../tests/Unit/RouterTest.php) i [kontrolera/renderowania](../tests/Unit/ControllerTest.php), uruchamiane przez PHP CLI bez nowego frameworka. Polecenia i zakres opisują [README — Routing](../README.md#routing) i [README — Kontrolery i widoki](../README.md#kontrolery-i-widoki); 17 listopada 2026 przeszły 22 scenariusze routera i 19 scenariuszy kontrolera/renderowania bez pominięć. Nowe testy obejmują m.in. wybór widoku, przekazanie `$data`, odrzucenie nieprawidłowych ścieżek i symlinków poza katalogiem szablonów oraz buforowanie po błędzie. Testy infrastruktury HTTP i renderowania nie zastępują wymaganych testów rzeczywistych reguł domenowych, które powstaną wraz z modułami.
 - **TODO:** 10.4, 12.12; testy reguł wraz z implementacją modułów.
 
 ### 32. CRON

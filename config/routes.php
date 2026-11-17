@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
+use WorldGraph\Controller\HomeController;
 use WorldGraph\Core\Http\Router;
 
 return static function (Router $router): void {
-    $home = static function (array $parameters, array $query): void {
-        readfile(dirname(__DIR__) . '/public/index.html');
-    };
+    $home = new HomeController();
 
-    $router->add('GET', '/', $home);
-    $router->add('GET', '/index.php', $home);
+    $router->add('GET', '/', [$home, 'index']);
+    $router->add('GET', '/index.php', [$home, 'index']);
 };

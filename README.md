@@ -2,7 +2,7 @@
 
 Szkielet repozytorium aplikacji do organizacji i analizy spójności fikcyjnych światów.
 
-**Aktualny status: demonstracyjna strona startowa, własny router PHP, przekazywanie tras przez Nginx, autoloading Composer i testy w lokalnym środowisku Docker Compose.** Kontrolery, warstwy biznesowe i schemat bazy aplikacji pozostają do implementacji.
+**Aktualny status: demonstracyjna strona startowa obsługiwana przez kontroler i wspólne renderowanie, własny router PHP, przekazywanie tras przez Nginx, autoloading Composer i testy w lokalnym środowisku Docker Compose.** Layout, pełne przeniesienie HTML do szablonu, warstwy biznesowe i schemat bazy aplikacji pozostają do implementacji.
 
 - [Założenia projektu](PROJECT.md)
 - [Plan architektury](ARCHITECTURE.md)
@@ -12,6 +12,16 @@ Szkielet repozytorium aplikacji do organizacji i analizy spójności fikcyjnych 
 - [Lista 36 kryteriów zaliczenia](docs/REQUIREMENTS.md)
 
 Większość katalogów w `src/`, `database/`, `tests/` i pozostałych miejscach wskazuje **planowaną organizację kodu**; działające fragmenty opisano poniżej.
+
+## Spis treści
+
+- [Uruchomienie środowiska lokalnego](#uruchomienie-środowiska-lokalnego)
+- [Routing](#routing)
+- [Kontrolery i widoki](#kontrolery-i-widoki)
+- [Composer i ładowanie klas PHP](#composer-i-ładowanie-klas-php)
+- [Kontenery i dane](#kontenery-i-dane)
+- [Przydatne polecenia](#przydatne-polecenia)
+- [Weryfikacja konfiguracji](#weryfikacja-konfiguracji)
 
 ## Uruchomienie środowiska lokalnego
 
@@ -41,11 +51,11 @@ Wymagania: Docker Desktop uruchomiony w trybie kontenerów Linux, z Docker Compo
    docker compose exec php composer install --no-interaction
    ```
 
-Adres serwera: <http://localhost:8080> (lub port z `.env`). Żądania kierowane do PHP obsługuje `public/index.php`: podłącza autoloader Composera, rejestruje trasy z `config/routes.php` i przekazuje metodę oraz adres do routera. Dla `GET /` i `GET /index.php` wybrana funkcja wysyła istniejący `public/index.html` jako HTML w UTF-8. Treść jest odczytywana ze stałej ścieżki przez `readfile()`. Style nadal pochodzą z `public/assets/css/style.css`. Strona zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria; linki prowadzą do sekcji na tej samej stronie.
+Adres serwera: <http://localhost:8080> (lub port z `.env`). Żądania kierowane do PHP obsługuje `public/index.php`: podłącza autoloader Composera, rejestruje trasy z `config/routes.php` i przekazuje metodę oraz adres do routera. Dla `GET /` i `GET /index.php` wywoływany jest `HomeController::index()`, korzystający ze wspólnego `render('home')`. Przejściowy szablon `templates/home.php` odczytuje istniejący `public/index.html` ze stałej ścieżki. Odpowiedź pozostaje HTML w UTF-8, ze stylami w `public/assets/css/style.css`. Strona zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria; linki prowadzą do sekcji na tej samej stronie.
 
 Bezpośredni adres `/index.html` nadal udostępnia ten sam plik statycznie, bez PHP. To rozwiązanie przejściowe do przeniesienia treści do szablonu w 1.7. Dla `/` Nginx wewnętrznie przekazuje żądanie do `index.php`, również dla metod innych niż GET i HEAD.
 
-Przedstawione postacie i powiązania są danymi demonstracyjnymi. Adresy aplikacji bez odpowiadającego pliku lub katalogu trafiają do PHP; niezarejestrowana trasa otrzymuje 404 z routera. Nie tworzy to nowych stron ani operacji biznesowych. Kontrolery, warstwy biznesowe i połączenie aplikacji z bazą pozostają do implementacji.
+Przedstawione postacie i powiązania są danymi demonstracyjnymi. Adresy aplikacji bez odpowiadającego pliku lub katalogu trafiają do PHP; niezarejestrowana trasa otrzymuje 404 z routera. Nie tworzy to nowych stron ani operacji biznesowych. Warstwy biznesowe i połączenie aplikacji z bazą pozostają do implementacji.
 
 ## Routing
 
@@ -79,11 +89,29 @@ docker compose exec -T php php tests/Integration/RoutingHttpTest.php
 
 Domyślnym adresem jest `http://nginx` w sieci Compose; inny adres można przekazać jako pierwszy argument skryptu. Test sprawdza odpowiedzi HTTP, treść i typ plików statycznych, metody, błędne query oraz niedostępność chronionych ścieżek. Nie zmienia danych aplikacji ani nie tworzy endpointów. Oczekiwany wynik: `Routing HTTP tests: 22 scenarios passed.` Kod 1 oznacza niepowodzenie.
 
+## Kontrolery i widoki
+
+Wariant A z zadania 1.5 dodaje `BaseController` ze wspólną chronioną metodą `render(string $view, array $data = []): void` i `HomeController` z akcją `index(array $parameters, array $query): void`. Definicje tras wskazują metodę istniejącego obiektu kontrolera. Router i punkt wejścia zachowują dotychczasowy kontrakt; nie wybierają klasy ani pliku z danych żądania.
+
+Renderowanie przyjmuje logiczną nazwę widoku, np. `home` lub `worlds/details`, i szuka odpowiadającego pliku `.php` wyłącznie w `templates/`, poza katalogiem publicznym. Nazwy mogą zawierać litery ASCII, cyfry, `_`, `-` oraz `/` rozdzielający segmenty. Nieprawidłowe nazwy są odrzucane; sprawdzana jest też rzeczywista ścieżka pliku, w tym dowiązania symboliczne, jego typ i dostępność do odczytu.
+
+Widok otrzymuje dane jako tablicę `$data` w statycznej funkcji, bez `extract()` i bez dostępu do obiektu kontrolera przez `$this`. Wartości nie są automatycznie kodowane; widok koduje niezaufany tekst w miejscu wstawiania do HTML, np. przez `htmlspecialchars()` z UTF-8. Widoki PHP są zaufanym kodem projektu i mają zachowywać bufor renderera. Wynik jest emitowany po poprawnym wykonaniu widoku; przy wyjątku lub niezrównoważonych buforach renderer sprząta bufory otwarte podczas tej operacji.
+
+Nieprawidłowa nazwa powoduje `InvalidArgumentException`, a brak lub niedostępność widoku `RuntimeException`. Pełna obsługa nieoczekiwanych wyjątków i komunikaty HTTP należą do 1.8. Layout należy do 1.6; pełne przeniesienie HTML do szablonu nastąpi w 1.7. Obecny `templates/home.php` jest jedynie adapterem do dotychczasowego pliku HTML, bez kopiowania treści i zmiany wyglądu.
+
+Testy renderowania uruchamia się bez dodatkowego frameworka:
+
+```sh
+docker compose exec -T php php tests/Unit/ControllerTest.php
+```
+
+Sprawdzają przekazywanie danych i izolację zmiennych, odrzucenie nieprawidłowych ścieżek, błędy i buforowanie oraz identyczność HTML kontrolera i obu istniejących tras. Tymczasowe widoki powstają w unikalnym podkatalogu `templates/` i są usuwane w `finally`. Test dowiązania jest jawnie pomijany, jeżeli platforma nie umożliwia jego utworzenia; wynik pokazuje liczbę pominiętych scenariuszy.
+
 ## Composer i ładowanie klas PHP
 
 Composer jest dostępny w istniejącym kontenerze `php`; nie wymaga instalacji PHP ani Composera na hoście. Konfiguracja w `composer.json` wymaga PHP `^8.5` i nie dodaje zewnętrznych bibliotek.
 
-Autoloading PSR-4 mapuje przestrzeń nazw `WorldGraph\` na katalog `src/`. Klasa routera znajduje się w `src/Core/Http/Router.php`; przykładowa przyszła klasa `WorldGraph\Controller\HomeController` będzie odpowiadać plikowi `src/Controller/HomeController.php`. Wielkość liter nazw katalogów, plików i klas musi się zgadzać. Kolejne klasy będą dodawane wraz z odpowiednimi modułami.
+Autoloading PSR-4 mapuje przestrzeń nazw `WorldGraph\` na katalog `src/`. Klasa routera znajduje się w `src/Core/Http/Router.php`, a `WorldGraph\Controller\HomeController` w `src/Controller/HomeController.php`. Wielkość liter nazw katalogów, plików i klas musi się zgadzać. Kolejne klasy będą dodawane wraz z odpowiednimi modułami.
 
 Polecenie `composer install` generuje `vendor/autoload.php`, podłączany przez `public/index.php`. Katalog `vendor/` jest ignorowany przez Git, a `composer.json` i wygenerowany `composer.lock` należy wersjonować. Dane robocze Composera pozostają w ignorowanym `storage/cache/composer/`.
 
@@ -167,5 +195,12 @@ Po dodaniu strony startowej sprawdzono odpowiedzi HTTP 200 dla `/` i arkusza CSS
 - GET strony i CSS zwrócił niezmienione bajty, a HEAD puste ciało. POST, PUT, OPTIONS, DELETE i PATCH dla `/` otrzymały routerowe 405 z `Allow: GET, HEAD`, co usuwa ograniczenie odnotowane w 1.3.
 - Nieznany adres z query, także przez POST, otrzymał puste PHP-owe 404. Nieprawidłowe query `/?q=%GG` otrzymało puste PHP-owe 400, potwierdzając przekazanie oryginalnego URI z query do routera. Dekodowanie wartości query i parametrów nadal sprawdzają testy CLI.
 - Ukryte ścieżki zwróciły 403, a nieistniejący skrypt PHP oraz odwołania do plików poza `public/` zwróciły 404.
+
+17 listopada 2026 zweryfikowano zadanie 1.5 w kontenerze `php`:
+
+- Kontrola składni przeszła dla `BaseController.php`, `HomeController.php`, `templates/home.php`, `config/routes.php` i `tests/Unit/ControllerTest.php`.
+- Testy kontrolerów zakończyły się kodem 0: `Controller tests: 19 scenarios passed; 0 skipped.` Sprawdzono również odrzucenie dowiązania wychodzącego poza `templates/`.
+- Przeszły ponownie 22 testy routera CLI i 22 testy integracji HTTP. Treść HTML/CSS oraz statusy GET/HEAD i błędnych żądań pozostały zgodne z wcześniejszymi wynikami.
+- Sprawdzenie z hosta potwierdziło HTTP 200 dla strony oraz HTTP 404 pod bezpośrednimi adresami `/templates/home.php` i `/src/Controller/HomeController.php`.
 
 Dokumentacja użytych mechanizmów: [kolejność uruchamiania Compose](https://docs.docker.com/compose/how-tos/startup-order/), [oficjalny obraz PHP](https://hub.docker.com/_/php), [oficjalny obraz PostgreSQL i wolumeny](https://hub.docker.com/_/postgres).
