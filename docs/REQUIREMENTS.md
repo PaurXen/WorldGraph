@@ -6,6 +6,8 @@
 
 Przegląd dokumentacyjny: **2026-11-13**.
 
+Aktualizacja dowodów dotyczących TODO 1.3: **2026-11-17**.
+
 | Status | Znaczenie |
 |---|---|
 | TODO | Brak implementacji potrzebnej do sprawdzenia warunku. |
@@ -27,9 +29,9 @@ Przegląd dokumentacyjny: **2026-11-13**.
 |---:|---|---|---|
 | 1 | [Dokumentacja w README.md](#1-dokumentacja-w-readmemd) | Częściowo | [README](../README.md) opisuje środowisko i szablon. |
 | 2 | [Docker](#2-docker) | Do weryfikacji | [Compose](../compose.yaml) i historyczne sprawdzenia w README. |
-| 3 | [Architektura aplikacji](#3-architektura-aplikacji) | Częściowo | [Architektura](../ARCHITECTURE.md) jest planem; brak backendu. |
-| 4 | [Routing](#4-routing) | TODO | Brak routera aplikacji; Nginx obsługuje istniejące pliki. |
-| 5 | [Obiektowy backend](#5-obiektowy-backend) | TODO | Brak klas backendu; katalogi nie są implementacją. |
+| 3 | [Architektura aplikacji](#3-architektura-aplikacji) | Częściowo | Istnieją [plan architektury](../ARCHITECTURE.md) i [router](../src/Core/Http/Router.php); warstwy funkcjonalne pozostają do implementacji. |
+| 4 | [Routing](#4-routing) | Częściowo | Istnieją [router](../src/Core/Http/Router.php) i [testy CLI](../tests/Unit/RouterTest.php); przekazywanie pozostałych tras przez Nginx i chronione przepływy są dalszymi zadaniami. |
+| 5 | [Obiektowy backend](#5-obiektowy-backend) | TODO | [Router](../src/Core/Http/Router.php) jest pierwszą klasą; brak współpracujących warstw i przypadków biznesowych. |
 | 6 | [Diagram ERD w Mermaid](#6-diagram-erd-w-mermaid) | Częściowo | [Diagram pojęciowy](../ARCHITECTURE.md#powiązania-i-liczności), bez schematu bazy. |
 | 7 | [Git](#7-git) | Częściowo | Repozytorium i historia istnieją; [zasady Git](../AGENTS.md#git-i-ochrona-zmian). |
 | 8 | [Realizacja tematu](#8-realizacja-tematu) | Częściowo | [Zakres produktu](../PROJECT.md) i demonstracja, bez funkcji aplikacji. |
@@ -37,7 +39,7 @@ Przegląd dokumentacyjny: **2026-11-13**.
 | 10 | [PostgreSQL](#10-postgresql) | Częściowo | [Kontener bazy](../compose.yaml); brak tabel aplikacji. |
 | 11 | [Złożoność bazy danych](#11-złożoność-bazy-danych) | Do doprecyzowania | Brak szczegółowego progu prowadzącego i schematu aplikacji. |
 | 12 | [Eksport bazy do pliku .sql](#12-eksport-bazy-do-pliku-sql) | TODO | Brak eksportu bazy aplikacji. |
-| 13 | [PHP](#13-php) | TODO | [PHP-FPM](../docker/php/Dockerfile) jest środowiskiem, bez kodu aplikacji. |
+| 13 | [PHP](#13-php) | Częściowo | Istnieją [punkt wejścia PHP](../public/index.php), [router](../src/Core/Http/Router.php) i [testy CLI](../tests/Unit/RouterTest.php); operacje biznesowe pozostają do implementacji. |
 | 14 | [JavaScript](#14-javascript) | TODO | Brak skryptów aplikacji; kryterium 14 oznacza JavaScript. |
 | 15 | [Fetch API (AJAX)](#15-fetch-api-ajax) | TODO | Brak działającego Fetch i endpointów aplikacji. |
 | 16 | [Design](#16-design) | Częściowo | [HTML](../public/index.html) i [CSS](../public/assets/css/style.css); status prototypu w TODO 0.5 to `[?]`. |
@@ -53,9 +55,9 @@ Przegląd dokumentacyjny: **2026-11-13**.
 | 26 | [Akcje na referencjach](#26-akcje-na-referencjach) | TODO | Brak kluczy obcych i migracji aplikacji. |
 | 27 | [Security Bingo](#27-security-bingo) | Do doprecyzowania | Brak dokładnej karty Bingo od prowadzącego. |
 | 28 | [Brak replikacji kodu](#28-brak-replikacji-kodu) | TODO | Brak wspólnych widoków i modułów aplikacji. |
-| 29 | [Czystość i przejrzystość kodu](#29-czystość-i-przejrzystość-kodu) | Częściowo | Istnieją czytelne pliki statyczne i [zasady warstw](../AGENTS.md#granice-warstw). |
+| 29 | [Czystość i przejrzystość kodu](#29-czystość-i-przejrzystość-kodu) | Częściowo | Istnieją [kod routera](../src/Core/Http/Router.php), pliki statyczne i [zasady warstw](../AGENTS.md#granice-warstw). |
 | 30 | [Tłumaczenia](#30-tłumaczenia) | TODO | Strona statyczna jest po polsku; brak przełączania PL/EN. |
-| 31 | [Testy jednostkowe](#31-testy-jednostkowe) | TODO | Brak testów i konfiguracji narzędzia testowego. |
+| 31 | [Testy jednostkowe](#31-testy-jednostkowe) | TODO | Istnieje [skrypt testów routera](../tests/Unit/RouterTest.php); brak wymaganych testów reguł domenowych. |
 | 32 | [CRON](#32-cron) | TODO | Brak zadania i potwierdzonego harmonogramu. |
 | 33 | [PHP Mailer](#33-php-mailer) | TODO | Brak wysyłki e-mail i konfiguracji SMTP aplikacji. |
 | 34 | [Upload zdjęcia](#34-upload-zdjęcia) | TODO | Brak formularza i obsługi uploadu ilustracji. |
@@ -82,21 +84,21 @@ Przegląd dokumentacyjny: **2026-11-13**.
 
 - **Warunek akceptacji:** Kod realizuje podział Controller, Service, Repository i Domain zgodnie z AGENTS oraz ARCHITECTURE; HTTP, reguły domenowe, autoryzacja i SQL mają przypisane odpowiedzialności.
 - **Weryfikacja:** Prześledzić rzeczywiste żądanie od routera do bazy i odpowiedzi oraz sprawdzić granice warstw w zmienionych modułach.
-- **Dowód:** Istnieją [plan architektury](../ARCHITECTURE.md#planowany-przepływ) i [instrukcje warstw](../AGENTS.md#granice-warstw). Nie ma jeszcze implementacji backendu. Docelowo: odnośniki do rzeczywistych klas i opis prześledzonej operacji.
+- **Dowód:** Istnieją [plan architektury](../ARCHITECTURE.md#planowany-przepływ), [instrukcje warstw](../AGENTS.md#granice-warstw), [router](../src/Core/Http/Router.php) i [punkt wejścia PHP](../public/index.php). Nie ma jeszcze współpracujących warstw Controller, Service, Repository i Domain obsługujących operacje na danych aplikacji. Docelowo: implementacja warstw i opis prześledzonej operacji biznesowej.
 - **TODO:** 1.1–1.6, 0.9, 12.13; implementacja modułów 3–11.
 
 ### 4. Routing
 
 - **Warunek akceptacji:** Poprawne trasy i metody uruchamiają właściwe operacje; parametry są walidowane, a nieznana trasa i niedozwolona metoda zwracają odpowiednio 404 i 405. Przekierowanie po logowaniu pozostaje wewnątrz aplikacji.
 - **Weryfikacja:** Sprawdzić poprawne adresy, błędne parametry, nieistniejące trasy i metody oraz chronione strony przez bezpośrednie żądania HTTP.
-- **Dowód:** Istnieje tylko [konfiguracja obsługi plików w Nginx](../docker/nginx/default.conf), nie router aplikacji. Docelowo: kod routera, konfiguracja front controllera oraz wyniki scenariuszy HTTP.
+- **Dowód:** W 1.3 dodano [router](../src/Core/Http/Router.php), [definicje istniejących tras](../config/routes.php) oraz integrację w [punkcie wejścia](../public/index.php). [Testy CLI](../tests/Unit/RouterTest.php) obejmują trasy stałe i regex, metody, parametry ścieżki i query oraz przypadki 400/404/405; 17 listopada 2026 przeszły 22 scenariusze. Polecenia i zakres opisuje [README — Routing](../README.md#routing). [Nginx](../docker/nginx/default.conf) nadal obsługuje istniejące pliki; przekazywanie pozostałych tras należy do 1.4. Pełna obsługa błędów 1.8, pełna weryfikacja z 1.9 i chronione przepływy 3.6 pozostają do wykonania.
 - **TODO:** 1.2–1.4, 1.8–1.9, 3.6.
 
 ### 5. Obiektowy backend
 
 - **Warunek akceptacji:** Działające operacje aplikacji są realizowane przez współpracujące obiekty odpowiednich warstw; kod domenowy i przypadki użycia nie są zbiorem skryptów proceduralnych w szablonach.
 - **Weryfikacja:** Przejść rzeczywisty przypadek użycia, wskazać odpowiedzialności obiektów oraz testy jego reguł.
-- **Dowód:** [ARCHITECTURE](../ARCHITECTURE.md) określa plan. Brak dowodu działającego obiektowego backendu. Docelowo: rzeczywiste klasy, ich użycie i wyniki testów. To kryterium pozostaje warunkiem krytycznym.
+- **Dowód:** Istnieje klasa [Router](../src/Core/Http/Router.php), używana przez [punkt wejścia](../public/index.php). Nie ma jeszcze współpracujących obiektów warstw Controller, Service, Repository i Domain realizujących przypadek biznesowy zgodny z [ARCHITECTURE](../ARCHITECTURE.md). Sam router nie spełnia tego kryterium; pozostaje ono warunkiem krytycznym.
 - **TODO:** 1.1–1.6, moduły 3–11, 12.13.
 
 ### 6. Diagram ERD w Mermaid
@@ -152,7 +154,7 @@ Przegląd dokumentacyjny: **2026-11-13**.
 
 - **Warunek akceptacji:** PHP obsługuje rzeczywiste żądania, walidację, operacje aplikacji i odpowiedzi, zgodnie z obiektową architekturą.
 - **Weryfikacja:** Sprawdzić składnię oraz rzeczywiste żądania i testy zmienionych przypadków użycia; wykazać wykonanie kodu PHP aplikacji.
-- **Dowód:** Istnieje [obraz PHP z pdo_pgsql](../docker/php/Dockerfile), lecz nie backend aplikacji. Docelowo: kod PHP oraz wyniki kontroli składni i działania; sam proces FPM nie spełnia warunku.
+- **Dowód:** Istnieją [obraz PHP z pdo_pgsql](../docker/php/Dockerfile), [punkt wejścia](../public/index.php), [router](../src/Core/Http/Router.php) i [konfiguracja tras](../config/routes.php). Kod PHP wybiera obsługę strony demonstracyjnej i podstawowe statusy HTTP. Kontrola składni punktu wejścia, routera, konfiguracji tras oraz [skryptu testów routera](../tests/Unit/RouterTest.php) przeszła 17 listopada 2026; bieżący zakres sprawdzeń opisuje [README — Routing](../README.md#routing). Walidacja i operacje biznesowe we współpracujących warstwach pozostają do implementacji.
 - **TODO:** 1.1–1.9, 3.1–3.10, kolejne moduły.
 
 ### 14. JavaScript
@@ -264,7 +266,7 @@ Przegląd dokumentacyjny: **2026-11-13**.
 
 - **Warunek akceptacji:** Kod ma jasne odpowiedzialności i nazwy, typowanie PHP, parametryzowane zapytania oraz kontrolowaną obsługę błędów, zgodnie z AGENTS. Opis dokumentacji odpowiada działającemu kodowi.
 - **Weryfikacja:** Wykonać przegląd zmienionych modułów, kontrolę składni i odpowiednie testy; sprawdzić diff pod kątem niezwiązanych zmian i sekretów.
-- **Dowód:** Istnieją [HTML](../public/index.html), [CSS](../public/assets/css/style.css) i instrukcje pracy. Nie przeprowadzono przeglądu nieistniejącego backendu. Docelowo: przegląd rzeczywistych modułów i wyniki kontroli.
+- **Dowód:** Istnieją [HTML](../public/index.html), [CSS](../public/assets/css/style.css), instrukcje pracy oraz typowany [router](../src/Core/Http/Router.php) z osobną [konfiguracją tras](../config/routes.php). Zakres bieżącej weryfikacji kodu routingu opisuje [README — Routing](../README.md#routing). Przegląd i sprawdzenia kolejnych modułów należy wykonywać wraz z ich implementacją.
 - **TODO:** 0.9, 1.1–1.9, 12.13; weryfikacja na bieżąco.
 
 ### 30. Tłumaczenia
@@ -278,7 +280,7 @@ Przegląd dokumentacyjny: **2026-11-13**.
 
 - **Warunek akceptacji:** Istnieją izolowane testy rzeczywistych reguł domenowych, obejmujące przypadki poprawne, błędne i graniczne. Są powtarzalne i nie opierają wyniku na danych użytkownika.
 - **Weryfikacja:** Uruchomić udokumentowane polecenie testów i zachować wynik; sprawdzić, jakie zachowanie badają i czy odróżniają błąd od poprawnej realizacji.
-- **Dowód:** Brak testów i ich konfiguracji; sam katalog tests nie jest dowodem. Docelowo: rzeczywiste testy, instrukcja uruchomienia oraz wynik z datą i rewizją. W 0.10 nie dodajemy frameworka.
+- **Dowód:** Istnieje samodzielny [skrypt testów routera](../tests/Unit/RouterTest.php), uruchamiany przez PHP CLI bez nowego frameworka. Polecenie i zakres są w [README — Routing](../README.md#routing); 17 listopada 2026 przeszły 22 scenariusze. Testy infrastruktury HTTP nie zastępują wymaganych testów rzeczywistych reguł domenowych, które powstaną wraz z modułami.
 - **TODO:** 10.4, 12.12; testy reguł wraz z implementacją modułów.
 
 ### 32. CRON

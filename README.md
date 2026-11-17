@@ -2,15 +2,16 @@
 
 Szkielet repozytorium aplikacji do organizacji i analizy spójności fikcyjnych światów.
 
-**Aktualny status: demonstracyjna strona startowa obsługiwana przez punkt wejścia PHP, autoloading Composer, dokumentacja, szkielet katalogów i lokalne środowisko Docker Compose.** Router, klasy warstw backendu i schemat bazy aplikacji pozostają do implementacji.
+**Aktualny status: demonstracyjna strona startowa obsługiwana przez punkt wejścia PHP i własny router, autoloading Composer, testy routera oraz lokalne środowisko Docker Compose.** Przekazywanie pozostałych tras przez Nginx, kontrolery, warstwy biznesowe i schemat bazy aplikacji pozostają do implementacji.
 
 - [Założenia projektu](PROJECT.md)
 - [Plan architektury](ARCHITECTURE.md)
 - [Widoki interfejsu w Figma — desktop i mobile](https://www.figma.com/design/uJj1UDCTmQoMBmMxnDGXqg/WorldGraph-%E2%80%94-All-Stitch-Views?node-id=18-42)
+- [Przykładowe repozytorium od prowadzącego](https://github.com/AdrianWii/wdpai-2027)
 - [Instrukcje dla agentów](AGENTS.md)
 - [Lista 36 kryteriów zaliczenia](docs/REQUIREMENTS.md)
 
-Katalogi w `src/`, `public/`, `database/`, `tests/` i pozostałych miejscach wskazują **planowaną organizację kodu**.
+Większość katalogów w `src/`, `database/`, `tests/` i pozostałych miejscach wskazuje **planowaną organizację kodu**; działające fragmenty opisano poniżej.
 
 ## Uruchomienie środowiska lokalnego
 
@@ -40,17 +41,39 @@ Wymagania: Docker Desktop uruchomiony w trybie kontenerów Linux, z Docker Compo
    docker compose exec php composer install --no-interaction
    ```
 
-Adres serwera: <http://localhost:8080> (lub port z `.env`). Żądania `/` i `/index.php` obsługuje `public/index.php`: podłącza autoloader Composera i wysyła zawartość istniejącego `public/index.html` jako HTML w UTF-8. Treść jest odczytywana ze stałej ścieżki przez `readfile()`. Style nadal pochodzą z `public/assets/css/style.css`. Strona zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria; linki prowadzą do sekcji na tej samej stronie.
+Adres serwera: <http://localhost:8080> (lub port z `.env`). Żądania kierowane do PHP obsługuje `public/index.php`: podłącza autoloader Composera, rejestruje trasy z `config/routes.php` i przekazuje metodę oraz adres do routera. Dla `GET /` i `GET /index.php` wybrana funkcja wysyła istniejący `public/index.html` jako HTML w UTF-8. Treść jest odczytywana ze stałej ścieżki przez `readfile()`. Style nadal pochodzą z `public/assets/css/style.css`. Strona zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria; linki prowadzą do sekcji na tej samej stronie.
 
 Bezpośredni adres `/index.html` nadal udostępnia ten sam plik statycznie, bez PHP. To rozwiązanie przejściowe do przeniesienia treści do szablonu w 1.7. Obecna konfiguracja Nginx wybiera `index.php` przed `index.html`; dodanie punktu wejścia nie wymaga jej zmiany ani przebudowy obrazu.
 
-Przedstawione postacie i powiązania są danymi demonstracyjnymi. Router i przekazywanie pozostałych tras aplikacji do PHP należą do 1.3–1.4; nieznane ścieżki nadal otrzymują 404 z Nginx. Klasy backendu i połączenie aplikacji z bazą pozostają do implementacji.
+Przedstawione postacie i powiązania są danymi demonstracyjnymi. Przekazywanie pozostałych tras aplikacji do PHP należy do 1.4; nieznane ścieżki nadal otrzymują 404 z Nginx. Kontrolery, warstwy biznesowe i połączenie aplikacji z bazą pozostają do implementacji.
+
+## Routing
+
+Wariant A z zadania 1.3 realizuje `WorldGraph\Core\Http\Router`. `add($method, $path, $handler)` rejestruje ścieżkę dosłowną, a `addRegex($method, $pattern, $handler)` wzorzec PCRE z delimiterami. Router wymaga dopasowania całej ścieżki; nazwane grupy regex stają się parametrami. Nie obsługuje szablonów `{id}`. W aplikacji zarejestrowano tylko istniejące `/` i `/index.php`; trasy światów oraz operacje zapisu w testach są izolowanymi przykładami.
+
+`resolve($method, $requestTarget)` zwraca status, funkcję obsługi lub `null`, `parameters`, `query` i `allowedMethods`. Punkt wejścia ustawia status HTTP oraz nagłówek `Allow` dla 405, a po dopasowaniu wywołuje funkcję z dwoma osobnymi argumentami: parametrami ścieżki i query. Parametry nie wskazują pliku ani klasy do załadowania.
+
+- Ścieżka jest oddzielana od query przed dopasowaniem. W testowym `/worlds/42?id=99&page=2` parametrem ścieżki pozostaje `id = "42"`, a query zawiera osobne `id = "99"` i `page = "2"`.
+- Wzorce porównywane są z zakodowaną ścieżką. Nazwane przechwycenia są dekodowane przez `rawurldecode()` jeden raz; query korzysta z reguł `parse_str()`, także dla list. Końcowy `/` ma znaczenie i nie jest automatycznie usuwany.
+- Trasy statyczne mają pierwszeństwo przed regex, również przy niedozwolonej metodzie. Wśród pasujących regex wybierany jest pierwszy obsługujący daną metodę. Powtórna rejestracja tej samej pary metoda–ścieżka lub metoda–wzorzec jest odrzucana.
+- Metody rozróżniają wielkość liter. `HEAD` korzysta z jawnej trasy `HEAD` albo z `GET`; funkcja obsługi jest wykonywana, a warstwa HTTP pomija ciało odpowiedzi. `OPTIONS` wymaga jawnej rejestracji i obecnie nie ma takiej trasy.
+- Nieprawidłowy format żądania daje wynik 400, brak dopasowania 404, a niedozwolona metoda 405 z listą dozwolonych metod, uwzględniającą `HEAD` przy `GET`. Punkt wejścia nie generuje jeszcze stron błędów; pełne komunikaty i obsługa nieoczekiwanych wyjątków należą do 1.8.
+
+Przed 1.4 Nginx nadal obsługuje istniejące pliki i odrzuca inne adresy przed PHP. Może też zakończyć niektóre metody dla katalogu: `OPTIONS /` zwraca obecnie 405 z Nginx bez nagłówka `Allow`, podczas gdy `OPTIONS /index.php` dociera do routera i zwraca 405 z `Allow: GET, HEAD`. Dopasowania dynamiczne są na tym etapie sprawdzane w CLI, bez publicznych endpointów demonstracyjnych.
+
+Testy routera nie wymagają nowego frameworka:
+
+```sh
+docker compose exec -T php php tests/Unit/RouterTest.php
+```
+
+Oczekiwany wynik: `Router tests: 22 scenarios passed.` Skrypt zwraca kod 1 przy błędzie. Testy obejmują wybór operacji, regex, parametry, query, kodowanie, pierwszeństwo tras, `HEAD`, błędną konfigurację i wyniki 400/404/405.
 
 ## Composer i ładowanie klas PHP
 
 Composer jest dostępny w istniejącym kontenerze `php`; nie wymaga instalacji PHP ani Composera na hoście. Konfiguracja w `composer.json` wymaga PHP `^8.5` i nie dodaje zewnętrznych bibliotek.
 
-Autoloading PSR-4 mapuje przestrzeń nazw `WorldGraph\` na katalog `src/`. Przykładowa przyszła klasa `WorldGraph\Controller\HomeController` będzie odpowiadać plikowi `src/Controller/HomeController.php`. Wielkość liter nazw katalogów, plików i klas musi się zgadzać. Obecnie katalogi zawierają tylko szkielet; klasy będą dodawane wraz z odpowiednimi modułami.
+Autoloading PSR-4 mapuje przestrzeń nazw `WorldGraph\` na katalog `src/`. Klasa routera znajduje się w `src/Core/Http/Router.php`; przykładowa przyszła klasa `WorldGraph\Controller\HomeController` będzie odpowiadać plikowi `src/Controller/HomeController.php`. Wielkość liter nazw katalogów, plików i klas musi się zgadzać. Kolejne klasy będą dodawane wraz z odpowiednimi modułami.
 
 Polecenie `composer install` generuje `vendor/autoload.php`, podłączany przez `public/index.php`. Katalog `vendor/` jest ignorowany przez Git, a `composer.json` i wygenerowany `composer.lock` należy wersjonować. Dane robocze Composera pozostają w ignorowanym `storage/cache/composer/`.
 
@@ -119,5 +142,12 @@ Po dodaniu strony startowej sprawdzono odpowiedzi HTTP 200 dla `/` i arkusza CSS
 - Wywołanie punktu wejścia w CLI potwierdziło rejestrację autoloadera Composera i zgodność wyniku z istniejącym HTML także przy innym katalogu roboczym.
 - `/`, `/index.php`, `/index.html` i `/assets/css/style.css` zwróciły HTTP 200. Odpowiedzi miały właściwy typ treści, a ich bajty odpowiadały istniejącym plikom HTML i CSS; odpowiedzi PHP miały kodowanie UTF-8.
 - Nieznana ścieżka zwróciła HTTP 404 z dotychczasowej obsługi Nginx.
+
+17 listopada 2026 zweryfikowano zadanie 1.3 w kontenerze `php`:
+
+- Kontrola składni `php -l` przeszła dla `src/Core/Http/Router.php`, `config/routes.php`, `public/index.php` i `tests/Unit/RouterTest.php`.
+- Polecenie testów z sekcji [Routing](#routing) zakończyło się kodem 0 i wynikiem `Router tests: 22 scenarios passed.`
+- HTTP GET dla `/`, `/index.php`, `/?q=myra&id=99`, `/index.html` i CSS zwrócił 200, właściwy typ treści oraz bajty zgodne z istniejącymi plikami. HEAD dla `/` i `/index.php` zwrócił 200 z pustym ciałem.
+- POST `/`, PUT `/index.php` i OPTIONS `/index.php` zwróciły 405 z `Allow: GET, HEAD`. Nieznany adres zwrócił 404 z Nginx; potwierdzono też opisane wyżej ograniczenie OPTIONS `/` przed 1.4.
 
 Dokumentacja użytych mechanizmów: [kolejność uruchamiania Compose](https://docs.docker.com/compose/how-tos/startup-order/), [oficjalny obraz PHP](https://hub.docker.com/_/php), [oficjalny obraz PostgreSQL i wolumeny](https://hub.docker.com/_/postgres).

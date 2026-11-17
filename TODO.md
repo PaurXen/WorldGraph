@@ -45,7 +45,7 @@ Zależność: etap 0.
 
 - [x] 1.1 Dodaj Composer, przestrzenie nazw i autoloading. Composer 2 w kontenerze PHP; PSR-4 `WorldGraph\` → `src/`. Instrukcja: [README.md — Composer](README.md#composer-i-ładowanie-klas-php); wyniki: [weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
 - [x] 1.2 Utwórz public/index.php jako punkt wejścia. Wariant A: autoloader Composera i istniejący HTML odczytywany ze stałej ścieżki, bez routera ani przenoszenia treści do szablonu. Wyniki: [README.md — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
-- [ ] 1.3 Dodaj router: metody HTTP, trasy statyczne, regex, parametry ścieżki i query.
+- [x] 1.3 Dodaj router: metody HTTP, trasy statyczne, regex, parametry ścieżki i query. Wariant A: własny Router z jawnymi regex, osobnymi parametrami i query oraz 22 scenariuszami CLI. W aplikacji tylko istniejąca strona główna; przekazywanie innych tras przez Nginx pozostaje w 1.4. Instrukcja: [README — Routing](README.md#routing); wyniki z 2026-11-17 w sekcji weryfikacji.
 - [ ] 1.4 Skonfiguruj Nginx do przekazywania tras aplikacji do front controllera.
 - [ ] 1.5 Dodaj bazowy kontroler i wspólne renderowanie widoków.
 - [ ] 1.6 Utwórz layout i współdzielone elementy nawigacji, nagłówka oraz stopki.

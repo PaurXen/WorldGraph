@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — WorldGraph
 
-> Dokument planowanej architektury aplikacji. Dostępny jest punkt wejścia PHP wyświetlający istniejący szablon strony startowej oraz lokalne środowisko Docker Compose. Router i klasy warstw backendu pozostają do implementacji.
+> Dokument planowanej architektury aplikacji. Dostępny jest punkt wejścia PHP, własny router z testami i istniejący szablon strony startowej oraz lokalne środowisko Docker Compose. Przekazywanie pozostałych tras przez Nginx, kontrolery i warstwy biznesowe pozostają do implementacji.
 
 ## Zakładany stos
 - PHP (backend obiektowy), PostgreSQL, HTML/CSS, JavaScript.
@@ -30,6 +30,8 @@ W 0.11 nie wybieramy konkretnej biblioteki, nie instalujemy zależności i nie d
 - `Domain`: zasady dotyczące światów, encji, relacji, chronologii i spójności.
 - `templates`: widoki HTML.
 - `public/assets`: statyczne pliki frontendu.
+
+W zadaniu 1.3 powstał `src/Core/Http/Router.php`, niezależny od superglobalnych zmiennych i wysyłania odpowiedzi. Rejestruje jawne metody oraz ścieżki statyczne lub regex, a wynik dopasowania zawiera funkcję obsługi, osobne parametry ścieżki i query oraz status i dozwolone metody. `public/index.php` odczytuje żądanie, korzysta z definicji w `config/routes.php`, ustawia status i wywołuje wybraną funkcję. Działa tylko dotychczasowa strona główna; obecna funkcja z `readfile()` będzie zastąpiona kontrolerem i szablonem w 1.5–1.7. Zasady dopasowania i polecenie testów opisuje [README — Routing](README.md#routing).
 
 ## Planowany model pojęciowy
 
@@ -178,4 +180,4 @@ Ukończenie 0.8 oznacza zapisanie i sprawdzenie zatwierdzonych formatów i regu�
 - Na mobile graf powinien mieć alternatywną listę relacji.
 
 ## Status
-Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. `public/index.php` podłącza autoloader Composera i obsługuje `/` oraz `/index.php`, wysyłając istniejący `public/index.html` przez `readfile()`. Style pochodzą z `public/assets/css/style.css`; treść i przykładowy graf SVG pozostają statyczne. `/index.html` jest nadal dostępny bezpośrednio bez PHP. Przeniesienie treści do szablonu należy do 1.7; router i przekazywanie pozostałych tras do PHP należą do 1.3–1.4. Nie ma jeszcze klas backendu, API, SQL ani schematu bazy aplikacji.
+Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. `public/index.php` podłącza autoloader Composera i router. Definicje w `config/routes.php` obsługują GET/HEAD dla `/` i `/index.php`, wysyłając istniejący `public/index.html` przez `readfile()`. Style pochodzą z `public/assets/css/style.css`; treść i przykładowy graf SVG pozostają statyczne. `/index.html` jest nadal dostępny bezpośrednio bez PHP. Przeniesienie treści do szablonu należy do 1.7, a przekazywanie pozostałych tras i metod przez Nginx do PHP do 1.4. Testy routera działają w CLI; nie ma jeszcze kontrolerów, warstw biznesowych, API, SQL ani schematu bazy aplikacji.
