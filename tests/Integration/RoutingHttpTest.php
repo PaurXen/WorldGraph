@@ -93,28 +93,32 @@ try {
     }
 
     $projectRoot = dirname(__DIR__, 2);
-    $html = $readFixture($projectRoot . '/public/index.html');
     $css = $readFixture($projectRoot . '/public/assets/css/style.css');
 } catch (Throwable $error) {
     fwrite(STDERR, 'Routing HTTP tests: ' . $error->getMessage() . PHP_EOL);
     exit(1);
 }
 
-$home = ['status' => 200, 'body' => $html, 'charset' => 'utf-8'];
+$home = ['status' => 200, 'home' => true, 'charset' => 'utf-8'];
 $emptyPhp = ['body' => '', 'charset' => 'utf-8'];
 $methodNotAllowed = ['status' => 405, 'allow' => ['GET', 'HEAD'], ...$emptyPhp];
 $notFound = ['status' => 404, ...$emptyPhp];
 $tests = [
     'GET /' => $home,
     'GET /index.php' => $home,
-    'GET /index.html' => ['status' => 200, 'body' => $html],
+    'GET /index.html' => $home,
     'GET /assets/css/style.css' => ['status' => 200, 'type' => 'text/css', 'body' => $css],
     'GET /?q=myra&id=99' => $home,
+    'GET /index.html?q=myra&id=99' => $home,
+    'GET /?view=../composer.json&layout=../composer.json&title=%3Cscript%3Eunexpected%3C/script%3E' => $home,
     'HEAD /' => ['status' => 200, ...$emptyPhp],
     'HEAD /index.php' => ['status' => 200, ...$emptyPhp],
+    'HEAD /index.html' => ['status' => 200, ...$emptyPhp],
     'POST /' => [...$methodNotAllowed, 'requestBody' => 'routing-http-test=1'],
+    'POST /index.html' => [...$methodNotAllowed, 'requestBody' => 'routing-http-test=1'],
     'PUT /' => $methodNotAllowed,
     'OPTIONS /' => $methodNotAllowed,
+    'OPTIONS /index.html' => $methodNotAllowed,
     'DELETE /' => $methodNotAllowed,
     'PATCH /' => $methodNotAllowed,
     'GET /worlds/42?tab=graph' => $notFound,
@@ -125,11 +129,15 @@ $tests = [
     'GET /composer.json' => ['status' => 404],
     'GET /config/routes.php' => ['status' => 404],
     'GET /src/Core/Http/Router.php' => ['status' => 404],
+    'GET /templates/home.php' => ['status' => 404],
+    'GET /templates/layouts/main.php' => ['status' => 404],
+    'GET /templates/partials/navigation.php' => ['status' => 404],
     'GET /vendor/autoload.php' => ['status' => 404],
     'GET /missing.php' => ['status' => 404],
 ];
 
 $failures = [];
+$canonicalHome = null;
 foreach ($tests as $name => $expected) {
     try {
         [$method, $target] = explode(' ', $name, 2);
@@ -166,6 +174,32 @@ foreach ($tests as $name => $expected) {
                     $details,
                 ),
             );
+        }
+        if ($expected['home'] ?? false) {
+            foreach (['html', 'head', 'body', 'header', 'nav', 'main', 'footer'] as $element) {
+                $expect(preg_match_all('~<' . $element . '\\b~i', $response['body']) === 1, 'Expected a single ' . $element . ' element; ' . $details);
+                $expect(preg_match_all('~</' . $element . '\\s*>~i', $response['body']) === 1, 'Expected a single closing ' . $element . ' element; ' . $details);
+            }
+            foreach ([
+                '<!DOCTYPE html>',
+                '<html lang="pl">',
+                '<title>WorldGraph — wszystko jest połączone</title>',
+                '<link rel="stylesheet" href="/assets/css/style.css">',
+                '<a class="skip-link" href="#main">',
+                '<main id="main">',
+                'Twój świat.<br>Wszystko jest<br><em>połączone.</em>',
+                'id="graph-title">Powiązania Elary w świecie Asteria</title>',
+                'id="idea"',
+                'href="/#idea"',
+                'href="/#world-preview"',
+            ] as $fragment) {
+                $expect(str_contains($response['body'], $fragment), 'Missing expected home page markup ' . json_encode($fragment, JSON_UNESCAPED_UNICODE) . '; ' . $details);
+            }
+            if ($canonicalHome === null) {
+                $canonicalHome = $response['body'];
+            } else {
+                $expect($response['body'] === $canonicalHome, 'Home aliases and query variants must return identical HTML; ' . $details);
+            }
         }
         if (isset($expected['allow'])) {
             $allowed = array_map('trim', explode(',', implode(',', $response['headers']['allow'] ?? [])));

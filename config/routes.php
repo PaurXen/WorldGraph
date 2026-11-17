@@ -10,4 +10,5 @@ return static function (Router $router): void {
 
     $router->add('GET', '/', [$home, 'index']);
     $router->add('GET', '/index.php', [$home, 'index']);
+    $router->add('GET', '/index.html', [$home, 'index']);
 };

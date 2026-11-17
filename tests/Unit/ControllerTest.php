@@ -52,6 +52,35 @@ $capture = static function (callable $operation): string {
     }
 };
 
+$expectHome = static function (string $html) use ($expectSame): void {
+    foreach (['html', 'head', 'body', 'header', 'nav', 'main', 'footer'] as $element) {
+        $expectSame(1, preg_match_all('~<' . $element . '\\b~i', $html));
+        $expectSame(1, preg_match_all('~</' . $element . '\\s*>~i', $html));
+    }
+    foreach ([
+        '<!DOCTYPE html>',
+        '<html lang="pl">',
+        '<title>WorldGraph — wszystko jest połączone</title>',
+        '<link rel="stylesheet" href="/assets/css/style.css">',
+        '<a class="skip-link" href="#main">',
+        '<main id="main">',
+        'id="hero-title"',
+        'Twój świat.<br>Wszystko jest<br><em>połączone.</em>',
+        'id="world-preview"',
+        'id="graph-title">Powiązania Elary w świecie Asteria</title>',
+        'id="idea"',
+        'href="/#idea"',
+        'href="/#world-preview"',
+        '<a class="brand" href="/"',
+        '<a class="back-to-top" href="#top">',
+        'Szablon demonstracyjny. Przedstawione postacie i powiązania są przykładowe.',
+    ] as $fragment) {
+        if (!str_contains($html, $fragment)) {
+            throw new RuntimeException('Home page is missing expected markup: ' . $fragment);
+        }
+    }
+};
+
 $createdFiles = [];
 $createdDirectories = [];
 $failures = [];
@@ -132,11 +161,25 @@ echo 'nested';
 $nested = ob_get_clean();
 echo $nested, '|after';
 PHP);
+    $writeFixture('layout', '<?php echo "[", $data["label"], "|", $content, "]";');
+    $writeFixture('layout-scope', <<<'PHP'
+<?php
+echo json_encode([
+    'controller' => isset($this),
+    'extracted' => isset($message),
+    'caller' => isset($callerValue),
+    'viewLocal' => isset($privateViewValue),
+    'content' => $content,
+    'message' => $data['message'],
+], JSON_THROW_ON_ERROR);
+PHP);
+    $writeFixture('view-local', '<?php $privateViewValue = "view local"; echo $data["message"];');
+    $writeFixture('counting', '<?php $data["counter"]->calls++; echo "counted";');
 
     $controller = new class extends BaseController {
-        public function show(string $view, array $data = []): void
+        public function show(string $view, array $data = [], ?string $layout = null): void
         {
-            $this->render($view, $data);
+            $this->render($view, $data, $layout);
         }
     };
 
@@ -254,22 +297,146 @@ PHP);
         'balanced template buffers contribute their output normally' => static function () use ($controller, $fixtureName, $capture, $expectSame): void {
             $expectSame('before|nested|after', $capture(static fn () => $controller->show($fixtureName . '/balanced')));
         },
-        'HomeController emits the original HTML regardless of parameters and query' => static function () use ($projectRoot, $capture, $expectSame): void {
-            $html = file_get_contents($projectRoot . '/public/index.html');
-            if ($html === false) {
-                throw new RuntimeException('Could not read the original home HTML.');
-            }
+        'a layout wraps the rendered view and receives its data' => static function () use ($controller, $fixtureName, $capture, $expectSame): void {
+            $expectSame('[page|<p>Żmija</p>]', $capture(static fn () => $controller->show(
+                $fixtureName . '/raw',
+                ['message' => '<p>Żmija</p>', 'label' => 'page'],
+                $fixtureName . '/layout',
+            )));
+        },
+        'layouts have an isolated scope with explicit data and content' => static function () use ($controller, $fixtureName, $capture, $expectSame): void {
+            $callerValue = 'message';
+            $output = $capture(static fn () => $controller->show(
+                $fixtureName . '/view-local',
+                ['message' => $callerValue],
+                $fixtureName . '/layout-scope',
+            ));
+            $expectSame([
+                'controller' => false,
+                'extracted' => false,
+                'caller' => false,
+                'viewLocal' => false,
+                'content' => 'message',
+                'message' => 'message',
+            ], json_decode($output, true, 512, JSON_THROW_ON_ERROR));
+        },
+        'data keys cannot replace the chosen layout or rendered content' => static function () use ($controller, $fixtureName, $fixtureDirectory, $capture, $expectSame): void {
+            $expectSame('[selected|view]', $capture(static fn () => $controller->show(
+                $fixtureName . '/raw',
+                [
+                    'message' => 'view',
+                    'label' => 'selected',
+                    'content' => 'unexpected content',
+                    'layout' => $fixtureName . '/throws',
+                    'templateFile' => $fixtureDirectory . '/throws.php',
+                ],
+                $fixtureName . '/layout',
+            )));
+        },
+        'repeated calls can switch layouts and plain views without stale content' => static function () use ($controller, $fixtureName, $capture, $expectSame): void {
+            $output = $capture(static function () use ($controller, $fixtureName): void {
+                $controller->show($fixtureName . '/raw', ['message' => 'first', 'label' => 'one'], $fixtureName . '/layout');
+                $controller->show($fixtureName . '/raw', ['message' => 'plain']);
+                $controller->show($fixtureName . '/raw', ['message' => 'last', 'label' => 'two'], $fixtureName . '/layout');
+            });
+            $expectSame('[one|first]plain[two|last]', $output);
+        },
+        'invalid layout names are rejected before executing the view' => static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
+            $counter = (object) ['calls' => 0];
+            $expectSame('', $capture(static function () use ($controller, $fixtureName, $counter, $expectException): void {
+                foreach (['', '../public/index', '/home', 'C:/templates/main', 'php://filter/resource=main', 'layouts/main.php', 'nested//main', "main\0", "main\n", '%2e%2e/main'] as $layout) {
+                    $expectException(InvalidArgumentException::class, static fn () => $controller->show(
+                        $fixtureName . '/counting',
+                        ['counter' => $counter],
+                        $layout,
+                    ));
+                }
+            }));
+            $expectSame(0, $counter->calls);
+        },
+        'missing layouts fail before executing the view' => static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
+            $counter = (object) ['calls' => 0];
+            $expectSame('', $capture(static fn () => $expectException(
+                RuntimeException::class,
+                static fn () => $controller->show($fixtureName . '/counting', ['counter' => $counter], $fixtureName . '/missing'),
+            )));
+            $expectSame(0, $counter->calls);
+        },
+        'directories cannot be rendered as layouts' => static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
+            $counter = (object) ['calls' => 0];
+            $expectSame('', $capture(static fn () => $expectException(
+                RuntimeException::class,
+                static fn () => $controller->show($fixtureName . '/counting', ['counter' => $counter], $fixtureName . '/directory'),
+            )));
+            $expectSame(0, $counter->calls);
+        },
+        'layout exceptions discard both view and nested layout output' => static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
+            $counter = (object) ['calls' => 0];
+            $output = $capture(static function () use ($controller, $fixtureName, $counter, $expectSame, $expectException): void {
+                echo 'caller|';
+                $initialLevel = ob_get_level();
+                $expectException(LogicException::class, static fn () => $controller->show(
+                    $fixtureName . '/counting', ['counter' => $counter], $fixtureName . '/nested-throws',
+                ));
+                $expectSame($initialLevel, ob_get_level());
+                echo 'after';
+            });
+            $expectSame(1, $counter->calls);
+            $expectSame('caller|after', $output);
+        },
+        'unbalanced layout buffers are discarded without leaking view output' => static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
+            $output = $capture(static function () use ($controller, $fixtureName, $expectSame, $expectException): void {
+                echo 'caller|';
+                $initialLevel = ob_get_level();
+                $expectException(RuntimeException::class, static fn () => $controller->show(
+                    $fixtureName . '/raw', ['message' => 'view output'], $fixtureName . '/unbalanced',
+                ));
+                $expectSame($initialLevel, ob_get_level());
+                echo 'after';
+            });
+            $expectSame('caller|after', $output);
+        },
+        'a failed view never executes the selected layout' => static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
+            $counter = (object) ['calls' => 0];
+            $expectSame('', $capture(static fn () => $expectException(
+                LogicException::class,
+                static fn () => $controller->show($fixtureName . '/throws', ['counter' => $counter], $fixtureName . '/counting'),
+            )));
+            $expectSame(0, $counter->calls);
+        },
+        'a layout may use balanced nested output buffers' => static function () use ($controller, $fixtureName, $capture, $expectSame): void {
+            $expectSame('before|nested|after', $capture(static fn () => $controller->show(
+                $fixtureName . '/raw', ['message' => 'view output'], $fixtureName . '/balanced',
+            )));
+        },
+        'the shared layout escapes metadata and uses trusted rendered content' => static function () use ($controller, $fixtureName, $capture, $expectSame): void {
+            $output = $capture(static fn () => $controller->show($fixtureName . '/raw', [
+                'message' => '<p>Rendered view</p>',
+                'title' => '<script>"Żmija" & \'Asteria\'</script>',
+                'description' => '" autofocus onfocus="alert(1)" <description> &',
+                'content' => 'UNEXPECTED_CONTENT_OVERRIDE',
+            ], 'layouts/main'));
+            $expectSame(true, str_contains($output, '<title>&lt;script&gt;&quot;Żmija&quot; &amp; &#039;Asteria&#039;&lt;/script&gt;</title>'));
+            $expectSame(true, str_contains($output, '<meta name="description" content="&quot; autofocus onfocus=&quot;alert(1)&quot; &lt;description&gt; &amp;">'));
+            $expectSame(1, substr_count($output, '<p>Rendered view</p>'));
+            $expectSame(false, str_contains($output, 'UNEXPECTED_CONTENT_OVERRIDE'));
+            $expectSame(false, str_contains($output, '<script>'));
+        },
+        'HomeController renders a complete page through the shared layout' => static function () use ($capture, $expectHome): void {
+            $expectHome($capture(static fn () => (new HomeController())->index([], [])));
+        },
+        'HomeController ignores parameters and query when selecting templates and metadata' => static function () use ($capture, $expectSame): void {
             $home = new HomeController();
-            $expectSame($html, $capture(static fn () => $home->index([], [])));
+            $html = $capture(static fn () => $home->index([], []));
             $expectSame($html, $capture(static fn () => $home->index(
                 ['view' => '../composer.json'],
-                ['view' => 'php://filter/resource=home', 'message' => '<script>unexpected</script>'],
+                ['view' => 'php://filter/resource=home', 'layout' => '../composer.json', 'title' => '<script>unexpected</script>'],
             )));
         },
     ];
 
-    foreach (['/', '/index.php'] as $target) {
-        $tests['GET ' . $target . ' invokes HomeController and preserves the original HTML'] = static function () use ($projectRoot, $target, $capture, $expectSame): void {
+    foreach (['/', '/index.php', '/index.html'] as $target) {
+        $tests['GET ' . $target . ' invokes HomeController and renders the same home page'] = static function () use ($projectRoot, $target, $capture, $expectSame): void {
             $router = new Router();
             $registerRoutes = require $projectRoot . '/config/routes.php';
             $registerRoutes($router);
@@ -278,16 +445,13 @@ PHP);
             $handler = new ReflectionFunction($route['handler']);
             $expectSame(true, $handler->getClosureThis() instanceof HomeController);
             $expectSame('index', $handler->getName());
-            $html = file_get_contents($projectRoot . '/public/index.html');
-            if ($html === false) {
-                throw new RuntimeException('Could not read the original home HTML.');
-            }
+            $html = $capture(static fn () => (new HomeController())->index([], []));
             $expectSame($html, $capture(static fn () => ($route['handler'])($route['parameters'], $route['query'])));
         };
     }
 
     $escapeLink = $fixtureDirectory . '/escape.php';
-    if (function_exists('symlink') && @symlink($projectRoot . '/public/index.html', $escapeLink)) {
+    if (function_exists('symlink') && @symlink($projectRoot . '/public/index.php', $escapeLink)) {
         $createdFiles[] = $escapeLink;
         $tests['symlinks cannot escape the templates directory'] = static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
             $expectSame('', $capture(static fn () => $expectException(
@@ -295,8 +459,17 @@ PHP);
                 static fn () => $controller->show($fixtureName . '/escape'),
             )));
         };
+        $tests['layout symlinks cannot escape the templates directory'] = static function () use ($controller, $fixtureName, $capture, $expectSame, $expectException): void {
+            $counter = (object) ['calls' => 0];
+            $expectSame('', $capture(static fn () => $expectException(
+                RuntimeException::class,
+                static fn () => $controller->show($fixtureName . '/counting', ['counter' => $counter], $fixtureName . '/escape'),
+            )));
+            $expectSame(0, $counter->calls);
+        };
     } else {
-        $skipped[] = 'Symlink escape: the platform could not create the fixture symlink.';
+        $skipped[] = 'View symlink escape: the platform could not create the fixture symlink.';
+        $skipped[] = 'Layout symlink escape: the platform could not create the fixture symlink.';
     }
 
     foreach ($tests as $name => $test) {
