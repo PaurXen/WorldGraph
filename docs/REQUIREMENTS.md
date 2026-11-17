@@ -6,7 +6,7 @@
 
 Przegląd dokumentacyjny: **2026-11-13**.
 
-Aktualizacja dowodów dotyczących TODO 1.3: **2026-11-17**.
+Aktualizacja dowodów dotyczących TODO 1.3–1.4: **2026-11-17**.
 
 | Status | Znaczenie |
 |---|---|
@@ -30,7 +30,7 @@ Aktualizacja dowodów dotyczących TODO 1.3: **2026-11-17**.
 | 1 | [Dokumentacja w README.md](#1-dokumentacja-w-readmemd) | Częściowo | [README](../README.md) opisuje środowisko i szablon. |
 | 2 | [Docker](#2-docker) | Do weryfikacji | [Compose](../compose.yaml) i historyczne sprawdzenia w README. |
 | 3 | [Architektura aplikacji](#3-architektura-aplikacji) | Częściowo | Istnieją [plan architektury](../ARCHITECTURE.md) i [router](../src/Core/Http/Router.php); warstwy funkcjonalne pozostają do implementacji. |
-| 4 | [Routing](#4-routing) | Częściowo | Istnieją [router](../src/Core/Http/Router.php) i [testy CLI](../tests/Unit/RouterTest.php); przekazywanie pozostałych tras przez Nginx i chronione przepływy są dalszymi zadaniami. |
+| 4 | [Routing](#4-routing) | Częściowo | Istnieją [router](../src/Core/Http/Router.php), [przekazywanie tras przez Nginx](../docker/nginx/default.conf) oraz testy [CLI](../tests/Unit/RouterTest.php) i [HTTP](../tests/Integration/RoutingHttpTest.php); chronione przepływy i pełna obsługa błędów są dalszymi zadaniami. |
 | 5 | [Obiektowy backend](#5-obiektowy-backend) | TODO | [Router](../src/Core/Http/Router.php) jest pierwszą klasą; brak współpracujących warstw i przypadków biznesowych. |
 | 6 | [Diagram ERD w Mermaid](#6-diagram-erd-w-mermaid) | Częściowo | [Diagram pojęciowy](../ARCHITECTURE.md#powiązania-i-liczności), bez schematu bazy. |
 | 7 | [Git](#7-git) | Częściowo | Repozytorium i historia istnieją; [zasady Git](../AGENTS.md#git-i-ochrona-zmian). |
@@ -91,7 +91,7 @@ Aktualizacja dowodów dotyczących TODO 1.3: **2026-11-17**.
 
 - **Warunek akceptacji:** Poprawne trasy i metody uruchamiają właściwe operacje; parametry są walidowane, a nieznana trasa i niedozwolona metoda zwracają odpowiednio 404 i 405. Przekierowanie po logowaniu pozostaje wewnątrz aplikacji.
 - **Weryfikacja:** Sprawdzić poprawne adresy, błędne parametry, nieistniejące trasy i metody oraz chronione strony przez bezpośrednie żądania HTTP.
-- **Dowód:** W 1.3 dodano [router](../src/Core/Http/Router.php), [definicje istniejących tras](../config/routes.php) oraz integrację w [punkcie wejścia](../public/index.php). [Testy CLI](../tests/Unit/RouterTest.php) obejmują trasy stałe i regex, metody, parametry ścieżki i query oraz przypadki 400/404/405; 17 listopada 2026 przeszły 22 scenariusze. Polecenia i zakres opisuje [README — Routing](../README.md#routing). [Nginx](../docker/nginx/default.conf) nadal obsługuje istniejące pliki; przekazywanie pozostałych tras należy do 1.4. Pełna obsługa błędów 1.8, pełna weryfikacja z 1.9 i chronione przepływy 3.6 pozostają do wykonania.
+- **Dowód:** W 1.3 dodano [router](../src/Core/Http/Router.php), [definicje istniejących tras](../config/routes.php) oraz integrację w [punkcie wejścia](../public/index.php). W 1.4 [Nginx](../docker/nginx/default.conf) otrzymał przekazywanie tras do PHP, z osobną regułą dla `/` zachowującą metodę i query. 17 listopada 2026 przeszły 22 scenariusze [CLI](../tests/Unit/RouterTest.php) i 22 scenariusze [HTTP](../tests/Integration/RoutingHttpTest.php), kontrola składni testu HTTP oraz `nginx -t`; konfigurację przeładowano. Sprawdzono niezmienioną treść HTML/CSS, HEAD, routerowe 405 z Allow, nieznane ścieżki i błędne query oraz ochronę plików. Polecenia i ograniczenia opisuje [README — Routing](../README.md#routing). Pełna obsługa błędów 1.8, pełna weryfikacja z 1.9 i chronione przepływy 3.6 pozostają do wykonania.
 - **TODO:** 1.2–1.4, 1.8–1.9, 3.6.
 
 ### 5. Obiektowy backend

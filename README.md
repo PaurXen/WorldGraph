@@ -2,7 +2,7 @@
 
 Szkielet repozytorium aplikacji do organizacji i analizy spójności fikcyjnych światów.
 
-**Aktualny status: demonstracyjna strona startowa obsługiwana przez punkt wejścia PHP i własny router, autoloading Composer, testy routera oraz lokalne środowisko Docker Compose.** Przekazywanie pozostałych tras przez Nginx, kontrolery, warstwy biznesowe i schemat bazy aplikacji pozostają do implementacji.
+**Aktualny status: demonstracyjna strona startowa, własny router PHP, przekazywanie tras przez Nginx, autoloading Composer i testy w lokalnym środowisku Docker Compose.** Kontrolery, warstwy biznesowe i schemat bazy aplikacji pozostają do implementacji.
 
 - [Założenia projektu](PROJECT.md)
 - [Plan architektury](ARCHITECTURE.md)
@@ -43,9 +43,9 @@ Wymagania: Docker Desktop uruchomiony w trybie kontenerów Linux, z Docker Compo
 
 Adres serwera: <http://localhost:8080> (lub port z `.env`). Żądania kierowane do PHP obsługuje `public/index.php`: podłącza autoloader Composera, rejestruje trasy z `config/routes.php` i przekazuje metodę oraz adres do routera. Dla `GET /` i `GET /index.php` wybrana funkcja wysyła istniejący `public/index.html` jako HTML w UTF-8. Treść jest odczytywana ze stałej ścieżki przez `readfile()`. Style nadal pochodzą z `public/assets/css/style.css`. Strona zawiera wprowadzenie do projektu oraz statyczny, przykładowy graf świata Asteria; linki prowadzą do sekcji na tej samej stronie.
 
-Bezpośredni adres `/index.html` nadal udostępnia ten sam plik statycznie, bez PHP. To rozwiązanie przejściowe do przeniesienia treści do szablonu w 1.7. Obecna konfiguracja Nginx wybiera `index.php` przed `index.html`; dodanie punktu wejścia nie wymaga jej zmiany ani przebudowy obrazu.
+Bezpośredni adres `/index.html` nadal udostępnia ten sam plik statycznie, bez PHP. To rozwiązanie przejściowe do przeniesienia treści do szablonu w 1.7. Dla `/` Nginx wewnętrznie przekazuje żądanie do `index.php`, również dla metod innych niż GET i HEAD.
 
-Przedstawione postacie i powiązania są danymi demonstracyjnymi. Przekazywanie pozostałych tras aplikacji do PHP należy do 1.4; nieznane ścieżki nadal otrzymują 404 z Nginx. Kontrolery, warstwy biznesowe i połączenie aplikacji z bazą pozostają do implementacji.
+Przedstawione postacie i powiązania są danymi demonstracyjnymi. Adresy aplikacji bez odpowiadającego pliku lub katalogu trafiają do PHP; niezarejestrowana trasa otrzymuje 404 z routera. Nie tworzy to nowych stron ani operacji biznesowych. Kontrolery, warstwy biznesowe i połączenie aplikacji z bazą pozostają do implementacji.
 
 ## Routing
 
@@ -59,7 +59,9 @@ Wariant A z zadania 1.3 realizuje `WorldGraph\Core\Http\Router`. `add($method, $
 - Metody rozróżniają wielkość liter. `HEAD` korzysta z jawnej trasy `HEAD` albo z `GET`; funkcja obsługi jest wykonywana, a warstwa HTTP pomija ciało odpowiedzi. `OPTIONS` wymaga jawnej rejestracji i obecnie nie ma takiej trasy.
 - Nieprawidłowy format żądania daje wynik 400, brak dopasowania 404, a niedozwolona metoda 405 z listą dozwolonych metod, uwzględniającą `HEAD` przy `GET`. Punkt wejścia nie generuje jeszcze stron błędów; pełne komunikaty i obsługa nieoczekiwanych wyjątków należą do 1.8.
 
-Przed 1.4 Nginx nadal obsługuje istniejące pliki i odrzuca inne adresy przed PHP. Może też zakończyć niektóre metody dla katalogu: `OPTIONS /` zwraca obecnie 405 z Nginx bez nagłówka `Allow`, podczas gdy `OPTIONS /index.php` dociera do routera i zwraca 405 z `Allow: GET, HEAD`. Dopasowania dynamiczne są na tym etapie sprawdzane w CLI, bez publicznych endpointów demonstracyjnych.
+Wariant A z zadania 1.4 konfiguruje Nginx jako wejście do routera. Osobna reguła `location = /` przekazuje `/` do `index.php` przez wewnętrzne `rewrite`, zachowując metodę i query. Dla innych adresów `try_files` obsługuje istniejący plik lub katalog, a przy ich braku przekazuje żądanie do `/index.php$is_args$args`. Oryginalne `REQUEST_URI`, metoda i query są przekazywane przez FastCGI; adres w przeglądarce pozostaje bez zmian. `OPTIONS /` dociera teraz do PHP i otrzymuje 405 z `Allow: GET, HEAD`.
+
+CSS i `/index.html` nadal obsługuje Nginx. Ukryte ścieżki, również w katalogach zasobów, są blokowane, a nieistniejące skrypty PHP otrzymują 404 przed PHP-FPM. Pliki spoza `public/` nie są udostępniane. Nie dodano publicznych tras demonstracyjnych; dynamiczne dopasowania routera pozostają objęte testami CLI.
 
 Testy routera nie wymagają nowego frameworka:
 
@@ -68,6 +70,14 @@ docker compose exec -T php php tests/Unit/RouterTest.php
 ```
 
 Oczekiwany wynik: `Router tests: 22 scenarios passed.` Skrypt zwraca kod 1 przy błędzie. Testy obejmują wybór operacji, regex, parametry, query, kodowanie, pierwszeństwo tras, `HEAD`, błędną konfigurację i wyniki 400/404/405.
+
+Sprawdzenie połączenia Nginx z PHP wykonuje osobny test HTTP:
+
+```sh
+docker compose exec -T php php tests/Integration/RoutingHttpTest.php
+```
+
+Domyślnym adresem jest `http://nginx` w sieci Compose; inny adres można przekazać jako pierwszy argument skryptu. Test sprawdza odpowiedzi HTTP, treść i typ plików statycznych, metody, błędne query oraz niedostępność chronionych ścieżek. Nie zmienia danych aplikacji ani nie tworzy endpointów. Oczekiwany wynik: `Routing HTTP tests: 22 scenarios passed.` Kod 1 oznacza niepowodzenie.
 
 ## Composer i ładowanie klas PHP
 
@@ -148,6 +158,14 @@ Po dodaniu strony startowej sprawdzono odpowiedzi HTTP 200 dla `/` i arkusza CSS
 - Kontrola składni `php -l` przeszła dla `src/Core/Http/Router.php`, `config/routes.php`, `public/index.php` i `tests/Unit/RouterTest.php`.
 - Polecenie testów z sekcji [Routing](#routing) zakończyło się kodem 0 i wynikiem `Router tests: 22 scenarios passed.`
 - HTTP GET dla `/`, `/index.php`, `/?q=myra&id=99`, `/index.html` i CSS zwrócił 200, właściwy typ treści oraz bajty zgodne z istniejącymi plikami. HEAD dla `/` i `/index.php` zwrócił 200 z pustym ciałem.
-- POST `/`, PUT `/index.php` i OPTIONS `/index.php` zwróciły 405 z `Allow: GET, HEAD`. Nieznany adres zwrócił 404 z Nginx; potwierdzono też opisane wyżej ograniczenie OPTIONS `/` przed 1.4.
+- POST `/`, PUT `/index.php` i OPTIONS `/index.php` zwróciły 405 z `Allow: GET, HEAD`. Nieznany adres zwrócił 404 z Nginx; odnotowano wówczas ograniczenie OPTIONS `/`: 405 z Nginx bez `Allow`, przed zmianą z 1.4.
+
+17 listopada 2026 zweryfikowano zadanie 1.4:
+
+- Uruchomiono istniejące usługi Compose bez przebudowy obrazów i usuwania wolumenów. `nginx -t` zakończył się powodzeniem, a konfigurację przeładowano przez `nginx -s reload`.
+- Kontrola składni `tests/Integration/RoutingHttpTest.php` przeszła. Polecenie testów HTTP z sekcji [Routing](#routing) zakończyło się kodem 0 i wynikiem `Routing HTTP tests: 22 scenarios passed.` Ponownie przeszły 22 scenariusze routera CLI.
+- GET strony i CSS zwrócił niezmienione bajty, a HEAD puste ciało. POST, PUT, OPTIONS, DELETE i PATCH dla `/` otrzymały routerowe 405 z `Allow: GET, HEAD`, co usuwa ograniczenie odnotowane w 1.3.
+- Nieznany adres z query, także przez POST, otrzymał puste PHP-owe 404. Nieprawidłowe query `/?q=%GG` otrzymało puste PHP-owe 400, potwierdzając przekazanie oryginalnego URI z query do routera. Dekodowanie wartości query i parametrów nadal sprawdzają testy CLI.
+- Ukryte ścieżki zwróciły 403, a nieistniejący skrypt PHP oraz odwołania do plików poza `public/` zwróciły 404.
 
 Dokumentacja użytych mechanizmów: [kolejność uruchamiania Compose](https://docs.docker.com/compose/how-tos/startup-order/), [oficjalny obraz PHP](https://hub.docker.com/_/php), [oficjalny obraz PostgreSQL i wolumeny](https://hub.docker.com/_/postgres).

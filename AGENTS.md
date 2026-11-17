@@ -11,6 +11,7 @@ Wskazówki dla agenta programistycznego pracującego nad tym repozytorium.
 - Realizuj już zlecony zakres bez ponownego pytania o tę samą zgodę. Rutynowe szczegóły wykonania w ramach zlecenia rozstrzygaj samodzielnie; zmiany zakresu lub zatwierdzonych reguł produktu uzgodnij z użytkownikiem.
 - Nie dodawaj komentarzy odwołujących się do promtów.
 - Nie wykraczaj poza środowisko projektowe/folder.
+- Możesz odnosić się do repozytorjum podanego w [README.md](README.md)
 
 ## Zasady docelowe
 
