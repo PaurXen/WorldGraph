@@ -8,6 +8,8 @@ RUN apt-get update \
 
 COPY --from=composer/composer:2-bin /composer /usr/local/bin/composer
 
+COPY docker/php/conf.d/errors.ini /usr/local/etc/php/conf.d/worldgraph-errors.ini
+
 ENV COMPOSER_HOME=/var/www/html/storage/cache/composer
 
 WORKDIR /var/www/html

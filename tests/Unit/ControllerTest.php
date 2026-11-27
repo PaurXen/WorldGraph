@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use WorldGraph\Controller\BaseController;
+use WorldGraph\Controller\ErrorController;
 use WorldGraph\Controller\HomeController;
 use WorldGraph\Core\Http\Router;
 
@@ -434,6 +435,58 @@ PHP);
             )));
         },
     ];
+
+    foreach ([
+        400 => ['Nieprawidłowe żądanie', 'Żądanie ma nieprawidłowy format.'],
+        404 => ['Nie znaleziono strony', 'Nie znaleziono strony pod tym adresem.'],
+        405 => ['Niedozwolona metoda', 'Ta metoda żądania jest niedozwolona.'],
+        500 => ['Błąd serwera', 'Wystąpił błąd serwera. Spróbuj ponownie później.'],
+    ] as $status => [$title, $message]) {
+        $tests['ErrorController renders HTTP ' . $status . ' with the shared layout'] = static function () use ($status, $title, $message, $capture, $expectSame): void {
+            $previousStatus = http_response_code() ?: 200;
+            try {
+                $html = $capture(static fn () => (new ErrorController())->show($status));
+                $expectSame($status, http_response_code());
+                foreach (['html', 'head', 'body', 'header', 'nav', 'main', 'footer', 'h1'] as $element) {
+                    $expectSame(1, preg_match_all('~<' . $element . '\\b~i', $html));
+                }
+                foreach ([(string) $status, $title, $message, 'href="/"', 'Powrót do strony głównej', '/assets/css/style.css'] as $fragment) {
+                    $expectSame(true, str_contains($html, $fragment));
+                }
+            } finally {
+                http_response_code($previousStatus);
+            }
+        };
+    }
+
+    $tests['ErrorController rejects unsupported status codes without output or status changes'] = static function () use ($capture, $expectSame, $expectException): void {
+        $previousStatus = http_response_code() ?: 200;
+        try {
+            http_response_code(202);
+            $expectSame('', $capture(static function () use ($expectException): void {
+                foreach ([0, 200, 302, 403, 418, 503, 999] as $status) {
+                    $expectException(InvalidArgumentException::class, static fn () => (new ErrorController())->show($status));
+                }
+            }));
+            $expectSame(202, http_response_code());
+        } finally {
+            http_response_code($previousStatus);
+        }
+    };
+
+    $tests['the error view escapes all supplied text'] = static function () use ($controller, $capture, $expectSame): void {
+        $html = $capture(static fn () => $controller->show('errors/http', [
+            'status' => '<script>400</script>',
+            'title' => '<strong>Nieprawidłowe żądanie</strong>',
+            'heading' => '<strong>Nieprawidłowe żądanie</strong>',
+            'message' => '" onmouseover="alert(1)" <script>unexpected</script> &',
+        ], 'layouts/main'));
+        $expectSame(false, str_contains($html, '<script>'));
+        $expectSame(false, str_contains($html, '<strong>'));
+        $expectSame(true, str_contains($html, '&lt;script&gt;400&lt;/script&gt;'));
+        $expectSame(true, str_contains($html, '&lt;strong&gt;Nieprawidłowe żądanie&lt;/strong&gt;'));
+        $expectSame(true, str_contains($html, '&quot; onmouseover=&quot;alert(1)&quot; &lt;script&gt;unexpected&lt;/script&gt; &amp;'));
+    };
 
     foreach (['/', '/index.php', '/index.html'] as $target) {
         $tests['GET ' . $target . ' invokes HomeController and renders the same home page'] = static function () use ($projectRoot, $target, $capture, $expectSame): void {

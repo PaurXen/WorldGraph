@@ -2,7 +2,7 @@
 
 Szkielet repozytorium aplikacji do organizacji i analizy spójności fikcyjnych światów.
 
-**Aktualny status: demonstracyjna strona startowa w szablonach PHP ze wspólnym layoutem, nagłówkiem, nawigacją i stopką, własny router PHP, przekazywanie tras przez Nginx, autoloading Composer i testy w lokalnym środowisku Docker Compose.** Warstwy biznesowe i schemat bazy aplikacji pozostają do implementacji.
+**Aktualny status: demonstracyjna strona startowa w szablonach PHP ze wspólnym layoutem, kontrolowane odpowiedzi błędów aplikacji, własny router PHP, przekazywanie tras przez Nginx, autoloading Composer i testy w lokalnym środowisku Docker Compose.** Warstwy biznesowe i schemat bazy aplikacji pozostają do implementacji.
 
 - [Założenia projektu](PROJECT.md)
 - [Plan architektury](ARCHITECTURE.md)
@@ -18,6 +18,7 @@ Większość katalogów w `src/`, `database/`, `tests/` i pozostałych miejscach
 - [Uruchomienie środowiska lokalnego](#uruchomienie-środowiska-lokalnego)
 - [Routing](#routing)
 - [Kontrolery i widoki](#kontrolery-i-widoki)
+- [Błędy i logi](#błędy-i-logi)
 - [Composer i ładowanie klas PHP](#composer-i-ładowanie-klas-php)
 - [Kontenery i dane](#kontenery-i-dane)
 - [Przydatne polecenia](#przydatne-polecenia)
@@ -67,7 +68,7 @@ Wariant A z zadania 1.3 realizuje `WorldGraph\Core\Http\Router`. `add($method, $
 - Wzorce porównywane są z zakodowaną ścieżką. Nazwane przechwycenia są dekodowane przez `rawurldecode()` jeden raz; query korzysta z reguł `parse_str()`, także dla list. Końcowy `/` ma znaczenie i nie jest automatycznie usuwany.
 - Trasy statyczne mają pierwszeństwo przed regex, również przy niedozwolonej metodzie. Wśród pasujących regex wybierany jest pierwszy obsługujący daną metodę. Powtórna rejestracja tej samej pary metoda–ścieżka lub metoda–wzorzec jest odrzucana.
 - Metody rozróżniają wielkość liter. `HEAD` korzysta z jawnej trasy `HEAD` albo z `GET`; funkcja obsługi jest wykonywana, a warstwa HTTP pomija ciało odpowiedzi. `OPTIONS` wymaga jawnej rejestracji i obecnie nie ma takiej trasy.
-- Nieprawidłowy format żądania daje wynik 400, brak dopasowania 404, a niedozwolona metoda 405 z listą dozwolonych metod, uwzględniającą `HEAD` przy `GET`. Punkt wejścia nie generuje jeszcze stron błędów; pełne komunikaty i obsługa nieoczekiwanych wyjątków należą do 1.8.
+- Nieprawidłowy format żądania daje wynik 400, brak dopasowania 404, a niedozwolona metoda 405 z listą dozwolonych metod, uwzględniającą `HEAD` przy `GET`. Punkt wejścia kieruje te wyniki do `ErrorController`, zachowuje status i `Allow` przy 405 oraz pomija ciało odpowiedzi na `HEAD`. Obsługę awarii opisuje sekcja [Błędy i logi](#błędy-i-logi).
 
 Wariant A z zadania 1.4 konfiguruje Nginx jako wejście do routera. Osobna reguła `location = /` przekazuje `/` do `index.php` przez wewnętrzne `rewrite`, zachowując metodę i query. Dla innych adresów `try_files` obsługuje istniejący plik lub katalog, a przy ich braku przekazuje żądanie do `/index.php$is_args$args`. Oryginalne `REQUEST_URI`, metoda i query są przekazywane przez FastCGI; adres w przeglądarce pozostaje bez zmian. `OPTIONS /` dociera teraz do PHP i otrzymuje 405 z `Allow: GET, HEAD`.
 
@@ -87,7 +88,7 @@ Sprawdzenie połączenia Nginx z PHP wykonuje osobny test HTTP:
 docker compose exec -T php php tests/Integration/RoutingHttpTest.php
 ```
 
-Domyślnym adresem jest `http://nginx` w sieci Compose; inny adres można przekazać jako pierwszy argument skryptu. Test sprawdza treść i strukturę strony pod trzema adresami, treść i typ CSS, metody, błędne query oraz niedostępność chronionych ścieżek. Nie zmienia danych aplikacji ani nie tworzy endpointów. Oczekiwany wynik: `Routing HTTP tests: 30 scenarios passed.` Kod 1 oznacza niepowodzenie.
+Domyślnym adresem jest `http://nginx` w sieci Compose; inny adres można przekazać jako pierwszy argument skryptu. Test sprawdza treść i strukturę strony pod trzema adresami, treść i typ CSS, komunikaty błędów, metody, błędne query oraz niedostępność chronionych ścieżek. Nie zmienia danych aplikacji ani nie tworzy endpointów. Wynik podaje liczbę wykonanych scenariuszy; kod 1 oznacza niepowodzenie.
 
 ## Kontrolery i widoki
 
@@ -99,7 +100,7 @@ Widok otrzymuje dane jako tablicę `$data` w statycznej funkcji, bez `extract()`
 
 Widoki PHP są zaufanym kodem projektu i mają zachowywać bufor renderera. Renderer osobno buforuje widok i layout, a wynik emituje dopiero po ich poprawnym wykonaniu. Przy wyjątku lub niezrównoważonych buforach sprząta bufory otwarte podczas tej operacji. Przekazanie `null` jako layoutu zachowuje dotychczasowe renderowanie samego widoku.
 
-Nieprawidłowa nazwa powoduje `InvalidArgumentException`, a brak lub niedostępność widoku albo layoutu `RuntimeException`. Pełna obsługa nieoczekiwanych wyjątków i komunikaty HTTP należą do 1.8.
+Nieprawidłowa nazwa powoduje `InvalidArgumentException`, a brak lub niedostępność widoku albo layoutu `RuntimeException`. Przy żądaniu HTTP nieoczekiwany wyjątek dociera do obsługi awarii w punkcie wejścia; użytkownik otrzymuje ogólną odpowiedź 500, bez szczegółów wyjątku.
 
 Strona główna korzysta z następującego podziału:
 
@@ -120,6 +121,33 @@ docker compose exec -T php php tests/Unit/ControllerTest.php
 ```
 
 Sprawdzają przekazywanie danych i izolację zmiennych, składanie z layoutem, kodowanie metadanych, odrzucenie nieprawidłowych ścieżek, błędy i buforowanie oraz obsługę strony przez kontroler i trzy istniejące adresy. Tymczasowe szablony powstają w unikalnym podkatalogu `templates/` i są usuwane w `finally`. Test dowiązania jest jawnie pomijany, jeżeli platforma nie umożliwia jego utworzenia; wynik pokazuje liczbę pominiętych scenariuszy.
+
+## Błędy i logi
+
+Wariant A zadania 1.8 pozostawia obsługę żądania w `public/index.php`. Router rozpoznaje żądanie, a `ErrorController::show(int $status)` renderuje stałe komunikaty przez `templates/errors/http.php` i istniejący layout. Kontroler obsługuje wyłącznie 400, 404, 405 i 500; nie tworzy publicznych tras do wywoływania błędów.
+
+| Status | Znaczenie |
+|---|---|
+| 400 | Nieprawidłowy format żądania. |
+| 404 | Brak pasującej trasy aplikacji. |
+| 405 | Trasa istnieje, ale nie obsługuje użytej metody; odpowiedź zachowuje `Allow`. |
+| 500 | Nieoczekiwany błąd wykonania aplikacji; użytkownik widzi ogólny komunikat. |
+
+Punkt wejścia buforuje wykonanie autoloadera, konfiguracji tras i kontrolera. Przy przechwyconym `Throwable` usuwa częściową treść i nagłówki nieudanej odpowiedzi, ustawia 500 oraz `Cache-Control: no-store` i próbuje wyrenderować stronę błędu. Jeśli zawiedzie również ten renderer lub jego szablon, zwraca stały komunikat awaryjny jako `text/plain` w UTF-8. `HEAD` zachowuje status i nagłówki, ale nie wysyła ciała także w przypadku błędu.
+
+Komunikaty nie zawierają surowego adresu żądania ani wiadomości wyjątku. Techniczny wpis przechwyconej awarii zawiera klasę błędu, nazwę pliku i linię; nie dopisuje wiadomości wyjątku, stosu, argumentów ani danych żądania. Te logi służą diagnostyce serwera; historia danych świata z etapu 4 pozostaje osobnym, planowanym mechanizmem.
+
+Obraz PHP dołącza `docker/php/conf.d/errors.ini` przez Dockerfile. Konfiguracja ustawia `display_errors=Off`, `display_startup_errors=Off`, `log_errors=On`, `error_reporting=E_ALL`, `error_log=/proc/self/fd/2` i `zend.exception_ignore_args=On`. Po zmianie tego pliku lub Dockerfile przebuduj istniejący obraz PHP poleceniem `docker compose up -d --build --wait`. Logi PHP-FPM można przeglądać przez `docker compose logs --tail=100 php`; wyniki sprawdzenia konfiguracji i kanału logowania zapisano w [weryfikacji konfiguracji](#weryfikacja-konfiguracji).
+
+Kontrola obejmuje błędy aplikacji PHP możliwe do przechwycenia podczas wykonania. Kontrolery i szablony pozostają zaufanym kodem projektu, który musi zachowywać bufory odpowiedzi. `exit` i `die` nie uruchamiają tej obsługi wyjątków. Nie zapewnia ona wyrenderowania szablonu przy każdym błędzie uruchamiania PHP, wyczerpaniu pamięci ani awarii PHP-FPM. Odpowiedzi generowane bezpośrednio przez Nginx, w tym blokowanie ukrytych plików i nieistniejących skryptów PHP, pozostają w jego konfiguracji.
+
+Odizolowane sprawdzenie nieoczekiwanej awarii i odpowiedzi awaryjnej:
+
+```sh
+docker compose exec -T php php tests/Integration/ErrorHandlingTest.php
+```
+
+Skrypt uruchamia kopię rzeczywistego punktu wejścia na osobnym serwerze PHP dostępnym tylko przez loopback. Tymczasowe pliki powstają w unikalnym podkatalogu `storage/cache/`; proces i pliki są sprzątane w `finally`. Test nie zmienia konfiguracji działającej aplikacji ani nie tworzy w niej publicznej trasy awarii. Wynik i zakres wykonanych scenariuszy opisuje sekcja weryfikacji. Dotychczasowe testy routera, kontrolerów i HTTP pozostają wymagane.
 
 ## Composer i ładowanie klas PHP
 
@@ -225,6 +253,15 @@ Po dodaniu strony startowej sprawdzono odpowiedzi HTTP 200 dla `/` i arkusza CSS
 - Wnętrze `main` porównano z HTML sprzed migracji: pozostało identyczne po ujednoliceniu zakończeń wierszy. Porównanie całego dokumentu potwierdziło zachowanie znaczników po normalizacji białych znaków między nimi oraz uwzględnieniu czterech zmian adresów: logo w nagłówku i stopce prowadzą do `/`, a dwa linki nawigacji do sekcji strony głównej.
 - W Edge sprawdzono szerokości 320, 390, 768, 1024 i 1440 px bez poziomego przewijania. Potwierdzono pojedyncze elementy `html`, `head`, `body`, `main`, `header`, `nav` i `footer`, załadowanie CSS z typem `text/css`, widoczny fokus odnośnika „Przejdź do treści”, przejście Enterem do `main` i kolejnym Tabem do odnośnika treści oraz nawigację z `/index.html` do `/#world-preview`. Obejrzano zrzuty dla 390 i 1440 px.
 
-Ta weryfikacja dotyczy jednej strony demonstracyjnej i jej migracji do szablonów. Nie jest pełnym audytem WCAG ani potwierdzeniem działania planowanych procesów aplikacji; strony błędów i obsługa nieoczekiwanych wyjątków pozostają w 1.8.
+Weryfikacja 1.6–1.7 dotyczyła jednej strony demonstracyjnej i jej migracji do szablonów. Nie była pełnym audytem WCAG ani potwierdzeniem działania planowanych procesów aplikacji; strony błędów i obsługę nieoczekiwanych wyjątków dodano następnie w 1.8.
+
+27 listopada 2026 zweryfikowano zadanie 1.8 po wznowieniu prac:
+
+- Uruchomiono istniejące usługi przez `docker compose up -d --wait`, korzystając z obrazu PHP przygotowanego w poprzedniej części prac. Nie usuwano danych ani wolumenów. `php --ini` potwierdziło wczytanie `worldgraph-errors.ini`.
+- Kontrola składni przeszła dla `public/index.php`, `ErrorController.php`, `templates/errors/http.php` oraz trzech zmienionych skryptów testów. Odczyt ustawień procesu PHP potwierdził wyłączone `display_errors` i `display_startup_errors`, włączone `log_errors`, poziom `E_ALL`, `error_log=/proc/self/fd/2` i włączone `zend.exception_ignore_args`.
+- Testy zakończyły się kodem 0: `Router tests: 22 scenarios passed.`, `Controller tests: 40 scenarios passed; 0 skipped.`, `Routing HTTP tests: 34 scenarios passed.` oraz `Error handling HTTP tests: 12 scenarios passed.`
+- Sprawdzono komunikaty 400/404/405, zachowanie `Allow`, puste ciało odpowiedzi `HEAD`, działającą stronę główną i CSS oraz ochronę plików. Odizolowane testy awarii objęły 500 po wyjątku i obiekcie `Error`, usunięcie częściowego wyniku i nagłówków, awarie autoloadera, konfiguracji tras, widoku i layoutu oraz stałą odpowiedź awaryjną. Sprawdzono również techniczny log bez wiadomości wyjątku i danych żądania.
+- Odczyt konfiguracji rzeczywistego PHP-FPM potwierdził wyłączone wyświetlanie diagnostyki, włączone logowanie na `/proc/self/fd/2` i pomijanie argumentów wyjątków. Jednorazowa kontrola przez FastCGI potwierdziła 500 w UTF-8 z `Cache-Control: no-store`, odrzucenie częściowego wyniku oraz nagłówków nieudanej odpowiedzi i puste ciało `HEAD`. `docker compose logs php` zawierało własny niesekretny znacznik i ogólne wpisy przechwyconej awarii bez syntetycznej wiadomości wyjątku. Pliki pomocnicze usunięto; nie dodano publicznego endpointu ani nie zmieniono tras działającej aplikacji.
+- W Edge przez CDP sprawdzono strony 400, 404 i 405 przy szerokościach 320, 390, 768 i 1440 px: HTML w UTF-8, CSS z HTTP 200 i typem `text/css`, brak poziomego przewijania i powielonej struktury dokumentu. Przy 390 i 1440 px Tab zaznaczał widoczny odnośnik „Przejdź do treści”, Enter przechodził do `main`, a kolejny Tab do odnośnika powrotu; jego aktywacja otwierała stronę główną. Obejrzano zrzuty mobilny i desktopowy. Odpowiedzi 500 sprawdzano odizolowanymi testami HTTP, bez publicznej trasy awarii.
 
 Dokumentacja użytych mechanizmów: [kolejność uruchamiania Compose](https://docs.docker.com/compose/how-tos/startup-order/), [oficjalny obraz PHP](https://hub.docker.com/_/php), [oficjalny obraz PostgreSQL i wolumeny](https://hub.docker.com/_/postgres).

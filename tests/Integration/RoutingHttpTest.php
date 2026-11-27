@@ -101,8 +101,8 @@ try {
 
 $home = ['status' => 200, 'home' => true, 'charset' => 'utf-8'];
 $emptyPhp = ['body' => '', 'charset' => 'utf-8'];
-$methodNotAllowed = ['status' => 405, 'allow' => ['GET', 'HEAD'], ...$emptyPhp];
-$notFound = ['status' => 404, ...$emptyPhp];
+$methodNotAllowed = ['status' => 405, 'allow' => ['GET', 'HEAD'], 'error' => 405, 'charset' => 'utf-8'];
+$notFound = ['status' => 404, 'error' => 404, 'charset' => 'utf-8'];
 $tests = [
     'GET /' => $home,
     'GET /index.php' => $home,
@@ -114,8 +114,11 @@ $tests = [
     'HEAD /' => ['status' => 200, ...$emptyPhp],
     'HEAD /index.php' => ['status' => 200, ...$emptyPhp],
     'HEAD /index.html' => ['status' => 200, ...$emptyPhp],
+    'HEAD /missing-page' => ['status' => 404, ...$emptyPhp],
+    'HEAD /?q=%GG' => ['status' => 400, ...$emptyPhp],
     'POST /' => [...$methodNotAllowed, 'requestBody' => 'routing-http-test=1'],
     'POST /index.html' => [...$methodNotAllowed, 'requestBody' => 'routing-http-test=1'],
+    'POST /index.php' => $methodNotAllowed,
     'PUT /' => $methodNotAllowed,
     'OPTIONS /' => $methodNotAllowed,
     'OPTIONS /index.html' => $methodNotAllowed,
@@ -123,7 +126,8 @@ $tests = [
     'PATCH /' => $methodNotAllowed,
     'GET /worlds/42?tab=graph' => $notFound,
     'POST /worlds/42?tab=graph' => [...$notFound, 'requestBody' => 'routing-http-test=1'],
-    'GET /?q=%GG' => ['status' => 400, ...$emptyPhp],
+    'GET /?q=%GG' => ['status' => 400, 'error' => 400, 'charset' => 'utf-8'],
+    'GET /missing-page?message=%3Cscript%3Erequest-marker%3C/script%3E' => $notFound,
     'GET /.env' => ['status' => 403],
     'GET /assets/css/.gitkeep' => ['status' => 403],
     'GET /composer.json' => ['status' => 404],
@@ -205,6 +209,22 @@ foreach ($tests as $name => $expected) {
             $allowed = array_map('trim', explode(',', implode(',', $response['headers']['allow'] ?? [])));
             sort($allowed, SORT_STRING);
             $expect($allowed === $expected['allow'], 'Expected Allow: GET, HEAD; ' . $details);
+        }
+        if (isset($expected['error'])) {
+            $messages = [
+                400 => 'Żądanie ma nieprawidłowy format.',
+                404 => 'Nie znaleziono strony pod tym adresem.',
+                405 => 'Ta metoda żądania jest niedozwolona.',
+            ];
+            foreach (['html', 'head', 'body', 'header', 'nav', 'main', 'footer', 'h1'] as $element) {
+                $expect(preg_match_all('~<' . $element . '\\b~i', $response['body']) === 1, 'Expected one error page ' . $element . '; ' . $details);
+            }
+            foreach ([(string) $expected['error'], $messages[$expected['error']], 'Powrót do strony głównej', 'href="/"', '/assets/css/style.css'] as $fragment) {
+                $expect(str_contains($response['body'], $fragment), 'Missing expected error page content; ' . $details);
+            }
+            foreach (['request-marker', '<script>', 'Stack trace:', 'Fatal error:', '/var/www/html/', 'Uncaught'] as $diagnostic) {
+                $expect(!str_contains($response['body'], $diagnostic), 'Error page exposes unexpected diagnostic or request content; ' . $details);
+            }
         }
     } catch (Throwable $error) {
         $failures[] = $name . ': ' . $error->getMessage();
