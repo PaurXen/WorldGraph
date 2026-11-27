@@ -60,7 +60,9 @@ Przedstawione postacie i powiązania są danymi demonstracyjnymi. Adresy aplikac
 
 ## Routing
 
-Wariant A z zadania 1.3 realizuje `WorldGraph\Core\Http\Router`. `add($method, $path, $handler)` rejestruje ścieżkę dosłowną, a `addRegex($method, $pattern, $handler)` wzorzec PCRE z delimiterami. Router wymaga dopasowania całej ścieżki; nazwane grupy regex stają się parametrami. Nie obsługuje szablonów `{id}`. W aplikacji zarejestrowano tylko adresy obecnej strony: `/`, `/index.php` i `/index.html`; trasy światów oraz operacje zapisu w testach są izolowanymi przykładami.
+Routing realizuje własna klasa PHP `WorldGraph\Core\Http\Router`, dodana w zadaniu 1.3. `add($method, $path, $handler)` rejestruje ścieżkę dosłowną, a `addRegex($method, $pattern, $handler)` wzorzec PCRE z delimiterami. Router wymaga dopasowania całej ścieżki; nazwane grupy regex stają się parametrami. Nie obsługuje szablonów `{id}`. W aplikacji zarejestrowano tylko adresy obecnej strony: `/`, `/index.php` i `/index.html`; trasy światów oraz operacje zapisu w testach są izolowanymi przykładami.
+
+Własna klasa zapewnia wymagane dopasowania metod, ścieżek i parametrów bez instalowania biblioteki routingu ani frameworka. Oddziela wybór operacji od wysyłania odpowiedzi HTTP, co pozwala sprawdzać reguły dopasowania samodzielnymi testami CLI opisanymi niżej.
 
 `resolve($method, $requestTarget)` zwraca status, funkcję obsługi lub `null`, `parameters`, `query` i `allowedMethods`. Punkt wejścia ustawia status HTTP oraz nagłówek `Allow` dla 405, a po dopasowaniu wywołuje funkcję z dwoma osobnymi argumentami: parametrami ścieżki i query. Parametry nie wskazują pliku ani klasy do załadowania.
 
@@ -70,7 +72,9 @@ Wariant A z zadania 1.3 realizuje `WorldGraph\Core\Http\Router`. `add($method, $
 - Metody rozróżniają wielkość liter. `HEAD` korzysta z jawnej trasy `HEAD` albo z `GET`; funkcja obsługi jest wykonywana, a warstwa HTTP pomija ciało odpowiedzi. `OPTIONS` wymaga jawnej rejestracji i obecnie nie ma takiej trasy.
 - Nieprawidłowy format żądania daje wynik 400, brak dopasowania 404, a niedozwolona metoda 405 z listą dozwolonych metod, uwzględniającą `HEAD` przy `GET`. Punkt wejścia kieruje te wyniki do `ErrorController`, zachowuje status i `Allow` przy 405 oraz pomija ciało odpowiedzi na `HEAD`. Obsługę awarii opisuje sekcja [Błędy i logi](#błędy-i-logi).
 
-Wariant A z zadania 1.4 konfiguruje Nginx jako wejście do routera. Osobna reguła `location = /` przekazuje `/` do `index.php` przez wewnętrzne `rewrite`, zachowując metodę i query. Dla innych adresów `try_files` obsługuje istniejący plik lub katalog, a przy ich braku przekazuje żądanie do `/index.php$is_args$args`. Oryginalne `REQUEST_URI`, metoda i query są przekazywane przez FastCGI; adres w przeglądarce pozostaje bez zmian. `OPTIONS /` dociera teraz do PHP i otrzymuje 405 z `Allow: GET, HEAD`.
+Przekazywanie tras przez Nginx, dodane w zadaniu 1.4, zachowuje bezpośrednią obsługę istniejących plików i kieruje pozostałe adresy do routera PHP. Osobna reguła `location = /` przekazuje `/` do `index.php` przez wewnętrzne `rewrite`, zachowując metodę i query. Dla innych adresów `try_files` obsługuje istniejący plik lub katalog, a przy ich braku przekazuje żądanie do `/index.php$is_args$args`. Oryginalne `REQUEST_URI`, metoda i query są przekazywane przez FastCGI; adres w przeglądarce pozostaje bez zmian. `OPTIONS /` dociera teraz do PHP i otrzymuje 405 z `Allow: GET, HEAD`.
+
+Ten podział pozwala Nginx udostępniać zasoby statyczne bez wykonywania PHP, a routerowi rozstrzygać adresy aplikacji. Nie przekazuje wszystkich plików przez kontroler PHP ani nie wymaga przekierowania przeglądarki. Połączenie obu warstw sprawdzają opisane niżej testy HTTP.
 
 CSS nadal obsługuje bezpośrednio Nginx. Po przeniesieniu HTML do szablonów adres `/index.html` trafia przez istniejące `try_files` do routera PHP. Ukryte ścieżki, również w katalogach zasobów, są blokowane, a nieistniejące skrypty PHP otrzymują 404 przed PHP-FPM. Pliki spoza `public/`, w tym layout i fragmenty widoków, nie są udostępniane. Nie dodano publicznych tras demonstracyjnych; dynamiczne dopasowania routera pozostają objęte testami CLI.
 
@@ -92,7 +96,9 @@ Domyślnym adresem jest `http://nginx` w sieci Compose; inny adres można przeka
 
 ## Kontrolery i widoki
 
-Wariant A z zadań 1.5–1.7 używa `BaseController` ze wspólną chronioną metodą `render(string $view, array $data = [], ?string $layout = null): void` i `HomeController` z akcją `index(array $parameters, array $query): void`. Definicje tras wskazują metodę istniejącego obiektu kontrolera. Router i punkt wejścia zachowują dotychczasowy kontrakt; nie wybierają klasy ani pliku z danych żądania.
+Renderowanie w bazowym kontrolerze, dodane w zadaniach 1.5–1.7, używa `BaseController` ze wspólną chronioną metodą `render(string $view, array $data = [], ?string $layout = null): void` i `HomeController` z akcją `index(array $parameters, array $query): void`. Definicje tras wskazują metodę istniejącego obiektu kontrolera. Router i punkt wejścia zachowują dotychczasowy kontrakt; nie wybierają klasy ani pliku z danych żądania.
+
+Wspólne renderowanie pozostaje w bazowym kontrolerze, dzięki czemu kontrolery korzystają z jednego mechanizmu wyboru i buforowania szablonów. Nie wydzielano osobnej klasy renderera ani nie dodawano silnika szablonów; widoki i layout są plikami PHP. Zachowanie mechanizmu sprawdzają testy kontrolerów opisane niżej.
 
 Renderowanie przyjmuje logiczną nazwę widoku, np. `home` lub `worlds/details`, oraz opcjonalnie layoutu, np. `layouts/main`. Odpowiadające pliki `.php` są wybierane wyłącznie z `templates/`, poza katalogiem publicznym. Nazwy mogą zawierać litery ASCII, cyfry, `_`, `-` oraz `/` rozdzielający segmenty. Nieprawidłowe nazwy są odrzucane; sprawdzana jest też rzeczywista ścieżka pliku, w tym dowiązania symboliczne, jego typ i dostępność do odczytu. Obie ścieżki są sprawdzane przed wykonaniem widoku.
 
@@ -124,7 +130,9 @@ Sprawdzają przekazywanie danych i izolację zmiennych, składanie z layoutem, k
 
 ## Błędy i logi
 
-Wariant A zadania 1.8 pozostawia obsługę żądania w `public/index.php`. Router rozpoznaje żądanie, a `ErrorController::show(int $status)` renderuje stałe komunikaty przez `templates/errors/http.php` i istniejący layout. Kontroler obsługuje wyłącznie 400, 404, 405 i 500; nie tworzy publicznych tras do wywoływania błędów.
+Obsługa błędów w punkcie wejścia, dodana w zadaniu 1.8, obejmuje wykonanie żądania w `public/index.php`. Router rozpoznaje żądanie, a `ErrorController::show(int $status)` renderuje stałe komunikaty przez `templates/errors/http.php` i istniejący layout. Kontroler obsługuje wyłącznie 400, 404, 405 i 500; nie tworzy publicznych tras do wywoływania błędów.
+
+Umieszczenie obsługi wyjątków w istniejącym punkcie wejścia pozwala objąć nią także uruchomienie autoloadera i konfiguracji tras. Nie wydzielano osobnej klasy wykonującej żądania HTTP; kontroler błędów odpowiada za status i prezentację komunikatu. Odpowiedzi routera sprawdzają testy HTTP, a awarie i odpowiedź zastępczą opisany niżej test izolowany.
 
 | Status | Znaczenie |
 |---|---|

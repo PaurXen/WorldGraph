@@ -26,7 +26,7 @@ Plan implementacji, wersja 2026-11-13.
 ## Zasady pracy
 
 - Ten dokument jest planem, nie poleceniem wykonania całej aplikacji.
-- Implementuj wyłącznie zadanie wskazane w aktualnym zleceniu. Jeden prompt powinien obejmować małą, spójną zmianę.
+- Implementuj wyłącznie zadanie wskazane w aktualnym zleceniu. Pojedyncze zlecenie powinno obejmować małą, spójną zmianę.
 - Przed pracą przeczytaj AGENTS.md, PROJECT.md, ARCHITECTURE.md i docs/REQUIREMENTS.md.
 - Po zadaniu przedstaw zmienione pliki, sposób weryfikacji i pozostałe ograniczenia.
 - Zaznaczaj `[x]` dopiero po wykonaniu i sprawdzeniu zadania. Folder lub deklaracja w dokumentacji nie jest implementacją.
@@ -53,10 +53,10 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 - [?] 0.5 Przygotuj prototyp minimum 5 istotnych ekranów w wariancie mobilnym i desktopowym ~~oraz eksport PDF~~.
 - [x] 0.6 Ustal model pojęciowy: User, World, WorldMember, Entity, Relationship, Event i uczestnicy wydarzenia.
 - [x] 0.7 Rozpisz macierz uprawnień Gościa, Czytelnika, Redaktora, Właściciela, Twórcy i Custom oraz trzy poziomy prywatności; uwzględnij komentarze i historię zmian w MVP. Ustalenia: [PROJECT.md — Role, prywatność i uprawnienia](PROJECT.md#role-prywatność-i-uprawnienia--ustalenia-07).
-- [x] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych. Użytkownik potwierdził format kart MYRA, kod rodzaju `same_as = 10`, reguły relacji, osobne wielokrotne wpisy wpływu, PostgreSQL, liczbowe ID i typ, Markdown w rekordach, zachowanie wersji oraz pierwszy poprawny zapis wygrywający konflikt. Ustalenia: [PROJECT.md — Dane i zapis](PROJECT.md#dane-i-zapis--ustalenia-08).
+- [x] 0.8 Ustal pola kart, początkowe typy relacji i zasady usuwania powiązanych danych. Przyjęto format kart oparty na MYRA, kod rodzaju `same_as = 10`, reguły relacji, osobne wielokrotne wpisy wpływu, PostgreSQL, liczbowe ID i typ, Markdown w rekordach, zachowanie wersji oraz pierwszy poprawny zapis wygrywający konflikt. Pełne formaty, znaczenie pól i reguły: [PROJECT.md — Dane i zapis](PROJECT.md#dane-i-zapis--ustalenia-08).
 - [x] 0.9 Uzupełnij AGENTS.md o zasady Git, granice warstw, weryfikację i warunki ukończenia zadania. Ustalenia: [AGENTS.md](AGENTS.md).
-- [x] 0.10 Rozszerz checklistę kryteriów o warunki akceptacji, status i dowód realizacji. Wariant B: tabela zbiorcza i opisy 36 kryteriów z weryfikacją oraz powiązaniami TODO w [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
-- [x] 0.11 Wyjaśnij dopuszczalność zewnętrznej biblioteki grafowej przed jej wyborem. Wariant A dopuszczony przez prowadzącego według informacji użytkownika z 2026-11-13. Zakres i źródło: [ARCHITECTURE.md — Biblioteka grafowa](ARCHITECTURE.md#biblioteka-grafowa--ustalenia-011). Wybór konkretnej biblioteki pozostaje w 7.1; żadna nie została jeszcze wybrana ani zainstalowana.
+- [x] 0.10 Rozszerz checklistę kryteriów o warunki akceptacji, status i dowód realizacji. Przygotowano szczegółową checklistę: tabelę zbiorczą oraz opisy wszystkich 36 kryteriów z warunkami akceptacji, sposobem weryfikacji, dowodami i powiązaniami TODO w [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Sama lista kryteriów została rozszerzona o dane potrzebne do oceny rzeczywistych wyników; statusy nie przyznają punktów.
+- [x] 0.11 Wyjaśnij dopuszczalność zewnętrznej biblioteki grafowej przed jej wyborem. Przyjęto użycie zewnętrznej biblioteki JavaScript wyłącznie do wizualizacji i interakcji grafu, z własnym modelem danych, backendem i integracją Fetch. Dopuszczalność przez prowadzącego odnotowano na podstawie informacji autora projektu z 2026-11-13. Zakres, pochodzenie tej informacji i warunki weryfikacji: [ARCHITECTURE.md — Biblioteka grafowa](ARCHITECTURE.md#biblioteka-grafowa--ustalenia-011). Wybór konkretnej biblioteki pozostaje w 7.1; żadna nie została jeszcze wybrana ani zainstalowana.
 
 **Warunek ukończenia:** zakres, nawigacja i podstawowy model są zapisane; nie ma niejawnych decyzji wymagających zgadywania przez agenta. Szczegółowe migracje powstają przy odpowiednich modułach.
 
@@ -65,13 +65,13 @@ Punkt odniesienia dla stanu początkowego: przegląd gałęzi Initial-setup z 20
 Zależność: etap 0.
 
 - [x] 1.1 Dodaj Composer, przestrzenie nazw i autoloading. Composer 2 w kontenerze PHP; PSR-4 `WorldGraph\` → `src/`. Instrukcja: [README.md — Composer](README.md#composer-i-ładowanie-klas-php); wyniki: [weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
-- [x] 1.2 Utwórz public/index.php jako punkt wejścia. Wariant A: autoloader Composera i istniejący HTML odczytywany ze stałej ścieżki, bez routera ani przenoszenia treści do szablonu. Wyniki: [README.md — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
-- [x] 1.3 Dodaj router: metody HTTP, trasy statyczne, regex, parametry ścieżki i query. Wariant A: własny Router z jawnymi regex, osobnymi parametrami i query oraz 22 scenariuszami CLI. W aplikacji tylko istniejąca strona główna; przekazywanie innych tras przez Nginx opisuje punkt 1.4. Instrukcja: [README — Routing](README.md#routing); wyniki z 2026-11-17 w sekcji weryfikacji.
-- [x] 1.4 Skonfiguruj Nginx do przekazywania tras aplikacji do front controllera. Wariant A: osobna reguła dla `/`, istniejące pliki obsługiwane bezpośrednio, pozostałe trasy przekazywane do `index.php` z metodą i query. Sprawdzono konfigurację i 22 scenariusze HTTP. Instrukcja i wyniki z 2026-11-17: [README — Routing](README.md#routing).
-- [x] 1.5 Dodaj bazowy kontroler i wspólne renderowanie widoków. Wariant A: BaseController, HomeController i przejściowy templates/home.php, z ograniczeniem ścieżek do templates i jawną tablicą danych. W stanie 1.5 sprawdzono 19 scenariuszy kontrolerów oraz dotychczasowe testy routera i HTTP. Layout i pełną migrację HTML zrealizowano następnie w 1.6–1.7. Instrukcja i wyniki z 2026-11-17: [README — Kontrolery i widoki](README.md#kontrolery-i-widoki).
-- [x] 1.6 Utwórz layout i współdzielone elementy nawigacji, nagłówka oraz stopki. Wariant A, wykonany łącznie z 1.7: BaseController składa widok z opcjonalnym layoutem, templates/layouts/main.php dołącza fragmenty z templates/partials/. Sprawdzono 34 scenariusze renderowania bez pominięć oraz interfejs przy szerokościach 320–1440 px i obsługę klawiaturą. Wyniki z 2026-11-17: [README — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
+- [x] 1.2 Utwórz public/index.php jako punkt wejścia. Pierwsze uruchomienie przez PHP podłączało autoloader Composera i odczytywało istniejący HTML ze stałej ścieżki. Pozwoliło sprawdzić punkt wejścia przed dodaniem routera i migracją treści; pełne przeniesienie do szablonów wykonano następnie w 1.7. Wyniki historycznego sprawdzenia: [README.md — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
+- [x] 1.3 Dodaj router: metody HTTP, trasy statyczne, regex, parametry ścieżki i query. Zaimplementowano własny Router PHP z jawnymi regex, osobnymi parametrami i query oraz 22 scenariuszami CLI, bez zewnętrznej biblioteki routingu. W aplikacji tylko istniejąca strona główna; przekazywanie innych tras przez Nginx opisuje punkt 1.4. Działanie i powód wyboru: [README — Routing](README.md#routing); wyniki z 2026-11-17 w sekcji weryfikacji.
+- [x] 1.4 Skonfiguruj Nginx do przekazywania tras aplikacji do front controllera. Zachowano bezpośrednią obsługę istniejących plików przez Nginx, osobną regułę dla `/` i przekazywanie pozostałych tras do `index.php` z metodą i query. Dzięki temu zasoby statyczne nie wymagają wykonania PHP. Sprawdzono konfigurację i 22 scenariusze HTTP. Instrukcja i wyniki z 2026-11-17: [README — Routing](README.md#routing).
+- [x] 1.5 Dodaj bazowy kontroler i wspólne renderowanie widoków. Renderowanie umieszczono w BaseController, z HomeController i przejściowym templates/home.php odczytującym dotychczasowy HTML; wybrane pliki ograniczono do templates i przekazywano jawną tablicę danych. W stanie 1.5 sprawdzono 19 scenariuszy kontrolerów oraz dotychczasowe testy routera i HTTP. Layout i pełną migrację HTML zrealizowano następnie w 1.6–1.7. Działanie, powód umieszczenia renderera w bazowym kontrolerze i wyniki z 2026-11-17: [README — Kontrolery i widoki](README.md#kontrolery-i-widoki).
+- [x] 1.6 Utwórz layout i współdzielone elementy nawigacji, nagłówka oraz stopki. Wspólny layout PHP wykonano łącznie z 1.7: BaseController składa widok z opcjonalnym layoutem, templates/layouts/main.php dołącza fragmenty z templates/partials/. Wydzielone fragmenty zastępują nagłówek, menu i stopkę dotychczasowego dokumentu HTML. Sprawdzono 34 scenariusze renderowania bez pominięć oraz interfejs przy szerokościach 320–1440 px i obsługę klawiaturą. Wyniki z 2026-11-17: [README — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
 - [x] 1.7 Przenieś istniejącą stronę startową do szablonu bez niepotrzebnego przeprojektowania. Wspólnie z 1.6 przeniesiono dotychczasowe sekcje i graf SVG do templates/home.php; CSS pozostał niezmieniony. Usunięto stary public/index.html, zachowując jego adres jako alias HomeController. Przeszły 22 testy routera i 30 scenariuszy HTTP; porównanie z poprzednim HTML potwierdziło zachowanie treści i struktury poza planowanymi linkami i białymi znakami między tagami. Instrukcja: [README — Kontrolery i widoki](README.md#kontrolery-i-widoki).
-- [x] 1.8 Dodaj kontrolowane odpowiedzi 400/404/405 oraz bezpieczną obsługę nieoczekiwanych błędów. Wariant A: ErrorController i wspólny widok błędów, przechwytywanie Throwable w punkcie wejścia, usuwanie częściowej odpowiedzi i tekstowa odpowiedź awaryjna 500. Zachowano Allow przy 405 i puste ciało HEAD; konfiguracja PHP ukrywa diagnostykę i włącza logowanie. Weryfikacja z 2026-11-27: 22 scenariusze routera, 40 kontrolerów bez pominięć, 34 HTTP i 12 odizolowanych awarii oraz kontrole PHP-FPM, logów, widoków mobilnych i desktopowych oraz klawiatury. Instrukcja: [README — Błędy i logi](README.md#błędy-i-logi); wyniki: [README — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
+- [x] 1.8 Dodaj kontrolowane odpowiedzi 400/404/405 oraz bezpieczną obsługę nieoczekiwanych błędów. Obsługa błędów pozostaje w punkcie wejścia: ErrorController i wspólny widok błędów, przechwytywanie Throwable, usuwanie częściowej odpowiedzi i tekstowa odpowiedź awaryjna 500. Zachowano Allow przy 405 i puste ciało HEAD; konfiguracja PHP ukrywa diagnostykę i włącza logowanie. Weryfikacja z 2026-11-27: 22 scenariusze routera, 40 kontrolerów bez pominięć, 34 HTTP i 12 odizolowanych awarii oraz kontrole PHP-FPM, logów, widoków mobilnych i desktopowych oraz klawiatury. Działanie i powód wyboru: [README — Błędy i logi](README.md#błędy-i-logi); wyniki: [README — weryfikacja konfiguracji](README.md#weryfikacja-konfiguracji).
 - [ ] 1.9 Sprawdź poprawne trasy, niepoprawny identyfikator i niedozwoloną metodę HTTP.
 
 **Warunek ukończenia:** strona działa przez PHP, parametry docierają do kontrolera, a nieznane trasy zwracają właściwy status. Baza nie jest jeszcze wymagana.
@@ -135,7 +135,7 @@ Przed pierwszym zapisem świata w 4.2 przygotuj model historii z 4.9 i wspólny 
 
 Zależność: etap 4.
 
-Użytkownik sprawdził i zatwierdził format pól na podstawie `myra.txt` w 0.8; opisuje go PROJECT.md. Opisy są źródłem Markdown w rekordach PostgreSQL; odwołania do plików służą ilustracjom i załącznikom. Nie dodawaj pól zależnych od typu ani dodatkowego unikalnego `fate_name` poza zatwierdzonym formatem.
+Karty korzystają ze wspólnego formatu pól opartego na `myra.txt`, opisanego w [PROJECT.md — Format karty](PROJECT.md#format-karty-zatwierdzony-na-podstawie-myra). Opisy są źródłem Markdown w rekordach PostgreSQL; odwołania do plików służą ilustracjom i załącznikom. Nie dodawaj pól zależnych od typu ani dodatkowego unikalnego `fate_name` poza tym formatem.
 
 - [ ] 5.1 Dodaj wspólny model karty należącej do świata; zacznij od postaci.
 - [ ] 5.2 Dodaj listę, szczegóły, tworzenie i edycję karty.
@@ -156,7 +156,7 @@ Użytkownik sprawdził i zatwierdził format pól na podstawie `myra.txt` w 0.8;
 
 Zależność: etap 5.
 
-- [ ] 6.1 Wdroż zatwierdzony w 0.8 katalog rodzajów relacji: należy do, jest przedstawicielem, znajduje się w, jest częścią, sojusz, wrogość i ten sam byt. Egzekwuj dozwolone końce, kierunek, brak połączenia rekordu z samym sobą i duplikaty według PROJECT.md. `same_as = 10` to kod rodzaju, nie waga; użytkownik już potwierdził te reguły.
+- [ ] 6.1 Wdroż katalog rodzajów relacji z 0.8: należy do, jest przedstawicielem, znajduje się w, jest częścią, sojusz, wrogość i ten sam byt. Egzekwuj dozwolone końce, kierunek, brak połączenia rekordu z samym sobą i duplikaty według [PROJECT.md — Początkowe rodzaje i reguły relacji](PROJECT.md#początkowe-rodzaje-i-reguły-relacji). `same_as = 10` to kod rodzaju, nie waga.
 - [ ] 6.2 Dodaj model: źródło, cel, typ, kierunek/wzajemność, opis i świat.
 - [ ] 6.3 Dodaj tworzenie relacji z poziomu karty.
 - [ ] 6.4 Wyświetlaj relacje przy obu końcach i umożliwiaj przejście do powiązanej karty.
@@ -173,7 +173,7 @@ Zależność: etap 5.
 
 Zależność: etap 6 oraz rozstrzygnięcie 0.11.
 
-- [ ] 7.1 Wybierz bibliotekę JS do wizualizacji zgodnie z wariantem A dopuszczonym w 0.11. Zapisz nazwę, wersję, źródło dystrybucji, warunki licencji, potrzebne zależności i ograniczenia. Sprawdź relacje skierowane i wzajemne, wiele wpływów A→B, graf wydarzeń, dane filtrowane przez backend oraz wariant mobilny i listową alternatywę dla klawiatury. Zachowaj własny model, backend i integrację Fetch.
+- [ ] 7.1 Wybierz zewnętrzną bibliotekę JavaScript wyłącznie do wizualizacji, rozmieszczania i interakcji grafu, zgodnie z [ARCHITECTURE.md — Biblioteka grafowa](ARCHITECTURE.md#biblioteka-grafowa--ustalenia-011). Zapisz nazwę, wersję, źródło dystrybucji, warunki licencji, potrzebne zależności i ograniczenia. Sprawdź relacje skierowane i wzajemne, wiele wpływów A→B, graf wydarzeń, dane filtrowane przez backend oraz wariant mobilny i listową alternatywę dla klawiatury. Zachowaj własny model, backend i integrację Fetch.
 - [ ] 7.2 Dodaj endpoint węzłów i krawędzi z kontrolą dostępu oraz ograniczeniem wielkości odpowiedzi. Uprawnienie do grafu nie może ujawniać kart, relacji, wpływów ani wydarzeń, do których użytkownik nie ma odczytu.
 - [ ] 7.3 Wyświetl graf istniejących kart i relacji w widokach Relacje, Lokacje i Los — wpływ postaci (FATE_GRAPH).
 - [ ] 7.4 Dodaj przesuwanie i przybliżanie.
@@ -292,5 +292,5 @@ Poniższa lista nie stanowi zlecenia implementacji:
 - Laboratoria i kryteria: https://ii.pk.edu.pl/~awidlak/subject/16
 - Wykład CSS: https://www.youtube.com/watch?v=BpVcMmMZudY
 - Pozycjonowanie i responsywność: https://www.youtube.com/watch?v=X-XylbveSQE
-- Szkic użytkownika: data infr draft.txt (CLFR/MYRA).
-- Ustalenia planistyczne tej rozmowy. Decyzje oznaczone jako robocze należy zatwierdzić przed zależną implementacją.
+- Szkic CLFR/MYRA: [myra.txt](myra.txt).
+- Zapisane decyzje produktu i modelu: [PROJECT.md](PROJECT.md) oraz [ARCHITECTURE.md](ARCHITECTURE.md). Warunki akceptacji i dowody: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Decyzje oznaczone w tych dokumentach jako robocze należy zatwierdzić przed zależną implementacją.

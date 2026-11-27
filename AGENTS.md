@@ -77,3 +77,17 @@ Nie dodawaj testów odtwarzających samą implementację ani narzędzi na zapas.
 ## Reguła najważniejsza
 
 **Nie implementuj niczego, czego nie zażądano.** Dokumenty opisują plan, a nie gotowy produkt.
+
+## Never depend on inaccessible chat context
+
+**This is a hard rule. Repository documentation and source comments must stand on their own.**
+
+- Do **not** write “as discussed in chat,” “the user's variant A,” “approach B from the previous prompt,” “the solution above,” or similar context-dependent references.
+- If two options are compared, give each a **descriptive name and an explanation of its actual behavior**.
+- When a choice is made, document **what changed, why, what was not chosen, and how to verify the result**.
+- If the user's instruction uses an undefined shorthand, find the complete definition in repository files first. If it remains ambiguous and materially affects the work, ask for the missing definition rather than inventing it.
+- Do not convert speculative brainstorming into a confirmed design decision.
+
+**Bad example:** “Implemented variant A; variant B remains for later.”
+
+**Good example:** “Selected directional raycast perception: forward-facing details remain clear, peripheral details progressively fade, and walls block line of sight. The alternative 360-degree raycast perception checks all directions equally and remains available for comparison.”
