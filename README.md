@@ -17,6 +17,7 @@ Większość katalogów w `src/`, `database/`, `tests/` i pozostałych miejscach
 
 - [Uruchomienie środowiska lokalnego](#uruchomienie-środowiska-lokalnego)
 - [Routing](#routing)
+  - [Sprawdzenie routingu](#sprawdzenie-routingu)
 - [Kontrolery i widoki](#kontrolery-i-widoki)
 - [Błędy i logi](#błędy-i-logi)
 - [Composer i ładowanie klas PHP](#composer-i-ładowanie-klas-php)
@@ -93,6 +94,24 @@ docker compose exec -T php php tests/Integration/RoutingHttpTest.php
 ```
 
 Domyślnym adresem jest `http://nginx` w sieci Compose; inny adres można przekazać jako pierwszy argument skryptu. Test sprawdza treść i strukturę strony pod trzema adresami, treść i typ CSS, komunikaty błędów, metody, błędne query oraz niedostępność chronionych ścieżek. Nie zmienia danych aplikacji ani nie tworzy endpointów. Wynik podaje liczbę wykonanych scenariuszy; kod 1 oznacza niepowodzenie.
+
+### Sprawdzenie routingu
+
+Zadanie 1.9 zamyka przegląd pokrycia i potwierdzenie istniejących testów szkieletu PHP. Ich zakres obejmuje poniższe zachowania, więc nie wymaga dodawania osobnego testu HTTP parametrów ani nowych tras aplikacji. Datowane wyniki znajdują się w [weryfikacji konfiguracji](#weryfikacja-konfiguracji).
+
+| Wymaganie | Scenariusz i oczekiwany wynik | Test |
+|---|---|---|
+| Poprawne adresy aplikacji | `GET /`, `/index.php` i `/index.html` zwracają 200 oraz identyczny HTML; CSS zwraca 200 i właściwą treść. | [RoutingHttpTest.php](tests/Integration/RoutingHttpTest.php) |
+| Poprawny parametr ścieżki | Testowa trasa `/worlds/42?id=99&page=2` przekazuje `id = "42"` w parametrach ścieżki oraz osobne `id = "99"` w query. | [RouterTest.php](tests/Unit/RouterTest.php), scenariusz `named path parameters and query remain separate` |
+| Błędny format identyfikatora | Testowy wzorzec `[1-9][0-9]*` odrzuca `abc`, `0`, `-1` i `01` jako brak dopasowania, ze statusem 404. | [RouterTest.php](tests/Unit/RouterTest.php), scenariusz `regex constraints reject identifiers outside the registered format` |
+| Niedozwolona metoda | `POST` dla każdego z trzech adresów strony zwraca 405 i `Allow: GET, HEAD`; testy routera sprawdzają też brak funkcji obsługi przy niedozwolonej metodzie. | [RoutingHttpTest.php](tests/Integration/RoutingHttpTest.php) i [RouterTest.php](tests/Unit/RouterTest.php) |
+| Nieznana trasa | Adres bez zarejestrowanej trasy otrzymuje 404; test routera sprawdza także brak funkcji obsługi. | [RoutingHttpTest.php](tests/Integration/RoutingHttpTest.php) i [RouterTest.php](tests/Unit/RouterTest.php), scenariusz `unknown paths report 404 without a handler` |
+| Błędny format żądania | Niepoprawne query `/?q=%GG` otrzymuje 400. | [RoutingHttpTest.php](tests/Integration/RoutingHttpTest.php) |
+| Odpowiedź na `HEAD` | `HEAD` dla strony oraz błędów 400 i 404 zachowuje właściwy status i zwraca puste ciało. | [RoutingHttpTest.php](tests/Integration/RoutingHttpTest.php) |
+
+Przykładowa trasa regex dla adresów takich jak `/worlds/42` istnieje tylko w izolowanych testach CLI. Nie jest publiczną trasą działającego modułu światów. W [konfiguracji aplikacji](config/routes.php) istnieją wyłącznie trzy adresy strony głównej. Dlatego HTTP 404 dla `/worlds/42` potwierdza obsługę nieznanej trasy, a nie sprawdzenie istnienia świata. Kontrola formatu w testowym regex nie dowodzi walidacji zakresu `BIGINT`, istnienia rekordu, izolacji światów ani uprawnień. Te kontrole należą do wdrażania kont, ochrony tras i modułów danych w etapach 3–4 TODO.
+
+Przegląd obejmuje także regresję renderowania w [ControllerTest.php](tests/Unit/ControllerTest.php) i odpowiedzi awaryjnych w [ErrorHandlingTest.php](tests/Integration/ErrorHandlingTest.php). Polecenia ich uruchomienia opisują sekcje [Kontrolery i widoki](#kontrolery-i-widoki) oraz [Błędy i logi](#błędy-i-logi).
 
 ## Kontrolery i widoki
 
@@ -271,5 +290,12 @@ Weryfikacja 1.6–1.7 dotyczyła jednej strony demonstracyjnej i jej migracji do
 - Sprawdzono komunikaty 400/404/405, zachowanie `Allow`, puste ciało odpowiedzi `HEAD`, działającą stronę główną i CSS oraz ochronę plików. Odizolowane testy awarii objęły 500 po wyjątku i obiekcie `Error`, usunięcie częściowego wyniku i nagłówków, awarie autoloadera, konfiguracji tras, widoku i layoutu oraz stałą odpowiedź awaryjną. Sprawdzono również techniczny log bez wiadomości wyjątku i danych żądania.
 - Odczyt konfiguracji rzeczywistego PHP-FPM potwierdził wyłączone wyświetlanie diagnostyki, włączone logowanie na `/proc/self/fd/2` i pomijanie argumentów wyjątków. Jednorazowa kontrola przez FastCGI potwierdziła 500 w UTF-8 z `Cache-Control: no-store`, odrzucenie częściowego wyniku oraz nagłówków nieudanej odpowiedzi i puste ciało `HEAD`. `docker compose logs php` zawierało własny niesekretny znacznik i ogólne wpisy przechwyconej awarii bez syntetycznej wiadomości wyjątku. Pliki pomocnicze usunięto; nie dodano publicznego endpointu ani nie zmieniono tras działającej aplikacji.
 - W Edge przez CDP sprawdzono strony 400, 404 i 405 przy szerokościach 320, 390, 768 i 1440 px: HTML w UTF-8, CSS z HTTP 200 i typem `text/css`, brak poziomego przewijania i powielonej struktury dokumentu. Przy 390 i 1440 px Tab zaznaczał widoczny odnośnik „Przejdź do treści”, Enter przechodził do `main`, a kolejny Tab do odnośnika powrotu; jego aktywacja otwierała stronę główną. Obejrzano zrzuty mobilny i desktopowy. Odpowiedzi 500 sprawdzano odizolowanymi testami HTTP, bez publicznej trasy awarii.
+
+27 listopada 2026 zamknięto przegląd routingu z zadania 1.9 na gałęzi `PHP-skeleton`, dla kodu PHP i testów z rewizji `5fc2b55`:
+
+- Istniejące testy pokrywają poprawne adresy, błędny format identyfikatora w izolowanej trasie regex oraz niedozwolone metody HTTP, zgodnie z [mapą scenariuszy](#sprawdzenie-routingu). Przegląd nie wykazał luk wymagających dodatkowych testów; kod aplikacji i skrypty testów pozostały bez zmian.
+- Wszystkie cztery polecenia zakończyły się kodem 0: `Router tests: 22 scenarios passed.`, `Controller tests: 40 scenarios passed; 0 skipped.`, `Routing HTTP tests: 34 scenarios passed.` oraz `Error handling HTTP tests: 12 scenarios passed.`
+- Testy wykonano w istniejącym środowisku Docker Compose z działającymi usługami; kontener bazy miał stan `healthy`. Nie uruchamiano ponownie usług, nie przebudowywano obrazów ani nie zmieniano konfiguracji. Tymczasowe szablony i prywatne pliki testów HTTP zostały posprzątane.
+- Zamknięcie 1.9 potwierdza routing szkieletu aplikacji. Nie stanowi dowodu działania przyszłych adresów światów, identyfikatorów rekordów bazy ani chronionych przepływów; po implementacji tych modułów potrzebne będą odpowiednie testy danych i dostępu.
 
 Dokumentacja użytych mechanizmów: [kolejność uruchamiania Compose](https://docs.docker.com/compose/how-tos/startup-order/), [oficjalny obraz PHP](https://hub.docker.com/_/php), [oficjalny obraz PostgreSQL i wolumeny](https://hub.docker.com/_/postgres).

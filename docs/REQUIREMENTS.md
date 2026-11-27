@@ -49,7 +49,7 @@
 
 Przegląd dokumentacyjny: **2026-11-13**.
 
-Aktualizacja opisów implementacji dotyczących TODO 1.3–1.8: **2026-11-27**. Datowane wyniki 1.3–1.5 dotyczą stanu sprzed migracji do layoutu; wyniki kolejnych weryfikacji opisuje [README](../README.md#weryfikacja-konfiguracji).
+Aktualizacja opisów implementacji dotyczących TODO 1.3–1.9: **2026-11-27**. Datowane wyniki 1.3–1.5 dotyczą stanu sprzed migracji do layoutu; wyniki kolejnych weryfikacji opisuje [README](../README.md#weryfikacja-konfiguracji).
 
 | Status | Znaczenie |
 |---|---|
@@ -73,7 +73,7 @@ Aktualizacja opisów implementacji dotyczących TODO 1.3–1.8: **2026-11-27**. 
 | 1 | [Dokumentacja w README.md](#1-dokumentacja-w-readmemd) | Częściowo | [README](../README.md) opisuje środowisko i szablon. |
 | 2 | [Docker](#2-docker) | Do weryfikacji | [Compose](../compose.yaml) i historyczne sprawdzenia w README. |
 | 3 | [Architektura aplikacji](#3-architektura-aplikacji) | Częściowo | Istnieją [plan architektury](../ARCHITECTURE.md), [router](../src/Core/Http/Router.php), [kontroler strony głównej](../src/Controller/HomeController.php) i [wspólne renderowanie](../src/Controller/BaseController.php); warstwy biznesowe pozostają do implementacji. |
-| 4 | [Routing](#4-routing) | Częściowo | Istnieją [router](../src/Core/Http/Router.php), [przekazywanie tras przez Nginx](../docker/nginx/default.conf), [kontroler błędów](../src/Controller/ErrorController.php) oraz testy [CLI](../tests/Unit/RouterTest.php) i [HTTP](../tests/Integration/RoutingHttpTest.php); chronione przepływy i pełny przegląd tras pozostają dalszymi zadaniami. |
+| 4 | [Routing](#4-routing) | Częściowo | [Przegląd istniejących testów](../README.md#sprawdzenie-routingu) potwierdza routing szkieletu PHP, błędny format ID w izolowanej trasie oraz metody HTTP. Chronione przepływy i rzeczywiste adresy modułów pozostają do wdrożenia i sprawdzenia. |
 | 5 | [Obiektowy backend](#5-obiektowy-backend) | TODO | Współpracują [Router](../src/Core/Http/Router.php), [HomeController](../src/Controller/HomeController.php) i [BaseController](../src/Controller/BaseController.php); brak warstw Service, Repository i Domain oraz przypadków biznesowych. |
 | 6 | [Diagram ERD w Mermaid](#6-diagram-erd-w-mermaid) | Częściowo | [Diagram pojęciowy](../ARCHITECTURE.md#powiązania-i-liczności), bez schematu bazy. |
 | 7 | [Git](#7-git) | Częściowo | Repozytorium i historia istnieją; [zasady Git](../AGENTS.md#git-i-ochrona-zmian). |
@@ -134,7 +134,7 @@ Aktualizacja opisów implementacji dotyczących TODO 1.3–1.8: **2026-11-27**. 
 
 - **Warunek akceptacji:** Poprawne trasy i metody uruchamiają właściwe operacje; parametry są walidowane, a nieznana trasa i niedozwolona metoda zwracają odpowiednio 404 i 405. Przekierowanie po logowaniu pozostaje wewnątrz aplikacji.
 - **Weryfikacja:** Sprawdzić poprawne adresy, błędne parametry, nieistniejące trasy i metody oraz chronione strony przez bezpośrednie żądania HTTP.
-- **Dowód:** Istnieją [router](../src/Core/Http/Router.php), [definicje tras](../config/routes.php) oraz integracja w [punkcie wejścia](../public/index.php). [Nginx](../docker/nginx/default.conf) przekazuje trasy aplikacji do PHP z metodą i query; `/`, `/index.php` i `/index.html` wskazują `HomeController`. W 1.8 wyniki 400/404/405 otrzymują treść z [kontrolera błędów](../src/Controller/ErrorController.php) i [wspólnego widoku](../templates/errors/http.php). Punkt wejścia obsługuje przechwycone awarie jako 500, zachowuje `Allow` przy 405 i pomija ciało przy `HEAD`. [Testy HTTP](../tests/Integration/RoutingHttpTest.php) oraz [odizolowane testy awarii](../tests/Integration/ErrorHandlingTest.php) sprawdzają odpowiedzi i brak wycieku diagnostyki. Datowane wyniki i ograniczenia opisują [README — Weryfikacja konfiguracji](../README.md#weryfikacja-konfiguracji) oraz [Błędy i logi](../README.md#błędy-i-logi). Pełna weryfikacja z 1.9 i chronione przepływy 3.6 pozostają do wykonania.
+- **Dowód:** Istnieją [router](../src/Core/Http/Router.php), [definicje tras](../config/routes.php) oraz integracja w [punkcie wejścia](../public/index.php). [Nginx](../docker/nginx/default.conf) przekazuje trasy aplikacji do PHP z metodą i query; `/`, `/index.php` i `/index.html` wskazują `HomeController`. Wyniki 400/404/405 otrzymują treść z [kontrolera błędów](../src/Controller/ErrorController.php) i [wspólnego widoku](../templates/errors/http.php); punkt wejścia obsługuje przechwycone awarie jako 500, zachowuje `Allow` przy 405 i pomija ciało przy `HEAD`. 27 listopada 2026 przegląd 1.9 potwierdził istniejące pokrycie poprawnych tras, błędnego formatu ID w izolowanej trasie regex i niedozwolonych metod. Przeszły 22 scenariusze routera, 40 kontrolerów bez pominięć, 34 HTTP i 12 odizolowanych awarii. [Mapa scenariuszy](../README.md#sprawdzenie-routingu) i [wyniki z rewizją](../README.md#weryfikacja-konfiguracji) rozróżniają testowy format ID od walidacji rekordów bazy. Chronione przepływy z 3.6 oraz rzeczywiste adresy, dane i uprawnienia modułów pozostają do implementacji i sprawdzenia; całe kryterium nie jest jeszcze spełnione.
 - **TODO:** 1.2–1.7, 1.8–1.9, 3.6.
 
 ### 5. Obiektowy backend
