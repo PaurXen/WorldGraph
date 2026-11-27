@@ -2,6 +2,45 @@
 
 > Dokument zatwierdzonego celu, zakresu MVP, nawigacji, uprawnień i struktury danych (punkty 0.2–0.4 oraz 0.6–0.8 TODO). Ustalenia 0.7 rozszerzają MVP o role Twórcy i Custom, trzy poziomy prywatności, komentarze oraz historię zmian danych i plików świata. W 0.8 zatwierdzono format kart oparty na MYRA, reguły relacji i wpływu postaci, sposób zapisu, usuwania i zachowania wersji oraz rozstrzygania równoległych edycji. Podstawowe MVP nadal obejmuje etapy 1–9; etap 10 stanowi extended MVP. Dokument opisuje plan produktu; aktualny stan implementacji przedstawia README.md.
 
+## Spis treści
+
+- [Problem](#problem)
+- [Cel produktu](#cel-produktu)
+- [Odbiorcy](#odbiorcy)
+- [Organizacja projektu i dostęp](#organizacja-projektu-i-dostęp)
+- [Zatwierdzony zakres MVP — etapy 1–9](#zatwierdzony-zakres-mvp--etapy-19)
+- [Role, prywatność i uprawnienia — ustalenia 0.7](#role-prywatność-i-uprawnienia--ustalenia-07)
+  - [Role w świecie](#role-w-świecie)
+  - [Prywatność i dostęp bez członkostwa](#prywatność-i-dostęp-bez-członkostwa)
+  - [Macierz operacji](#macierz-operacji)
+  - [Katalog parametrów](#katalog-parametrów)
+  - [Reguły łączenia i egzekwowania uprawnień](#reguły-łączenia-i-egzekwowania-uprawnień)
+  - [Historia zmian i wersje w MVP](#historia-zmian-i-wersje-w-mvp)
+  - [Warunek ukończenia 0.7](#warunek-ukończenia-07)
+- [Dane i zapis — ustalenia 0.8](#dane-i-zapis--ustalenia-08)
+  - [Zatwierdzone decyzje](#zatwierdzone-decyzje)
+  - [Format karty zatwierdzony na podstawie MYRA](#format-karty-zatwierdzony-na-podstawie-myra)
+  - [Początkowe rodzaje i reguły relacji](#początkowe-rodzaje-i-reguły-relacji)
+  - [Osobne wpisy wpływu postaci](#osobne-wpisy-wpływu-postaci)
+  - [Usuwanie bieżącej treści i zachowanie historii](#usuwanie-bieżącej-treści-i-zachowanie-historii)
+  - [Warunek ukończenia 0.8](#warunek-ukończenia-08)
+- [Strony i nawigacja](#strony-i-nawigacja)
+  - [Mapa stron](#mapa-stron)
+  - [Wspólna nawigacja i widok projektu](#wspólna-nawigacja-i-widok-projektu)
+  - [Podstawowe przejścia](#podstawowe-przejścia)
+  - [Granice ustaleń 0.3](#granice-ustaleń-03)
+- [Zakładki projektu — ustalenia 0.4](#zakładki-projektu--ustalenia-04)
+  - [Zawartość i adresy](#zawartość-i-adresy)
+  - [Widoki zakładki Graf](#widoki-zakładki-graf)
+  - [Układ inspirowany GitHubem](#układ-inspirowany-githubem)
+  - [TBI, dostęp i puste stany](#tbi-dostęp-i-puste-stany)
+- [Odniesienie do szkicu MYRA](#odniesienie-do-szkicu-myra)
+- [Warunek ukończenia MVP](#warunek-ukończenia-mvp)
+- [Extended MVP — etap 10](#extended-mvp--etap-10)
+- [Dalsze etapy projektu](#dalsze-etapy-projektu)
+- [Funkcje odłożone poza pierwszą wersję](#funkcje-odłożone-poza-pierwszą-wersję)
+- [Realizacja na WdPAI](#realizacja-na-wdpai)
+
 ## Problem
 Twórcy rozbudowanych uniwersów przechowują informacje o postaciach, miejscach, frakcjach i fabule w wielu notatkach. Utrudnia to porządkowanie wiedzy, odnajdywanie powiązań i planowanie dalszego przebiegu historii. Współpraca wymaga również jasnego określenia, kto może przeglądać i edytować materiały.
 
@@ -39,7 +78,7 @@ Pierwsza użyteczna wersja to encyklopedia świata z kilkoma widokami grafów, w
 8. **Komentarze:** dodawanie po zalogowaniu, odczyt oraz edycja i usuwanie własnych komentarzy; moderacja zgodnie z uprawnieniami. Komentarz nie daje prawa zmiany treści świata i nie omija dostępu do komentowanego kontekstu.
 9. **Historia i wersje:** kompletna historia skutecznych zmian danych i plików świata, grupowana w zestawy podobne do commitów, z odczytem wcześniejszych wersji i porównaniem zmian przez uprawnione osoby. Podstawa zapisu historii powstaje w etapie 4, a kolejne moduły korzystają z niej od pierwszej operacji zmieniającej dane.
 
-Karta i wydarzenie są zapisywane po jednym razie w swoich modelach. Listy, szczegóły i widoki grafów prezentują te same dane; wydarzenie nie jest kopiowane do kart na potrzeby grafu. W 0.11 przyjęto wariant A: zewnętrzną bibliotekę JS wyłącznie do wizualizacji, układu i interakcji grafu, z własnym modelem, backendem i integracją Fetch. Dopuszczalność potwierdził prowadzący według informacji użytkownika z 2026-11-13; wybór konkretnej biblioteki pozostaje w 7.1. Zakres, źródło i warunki opisuje [ARCHITECTURE.md — Biblioteka grafowa](ARCHITECTURE.md#biblioteka-grafowa--ustalenia-011).
+Karta i wydarzenie są zapisywane po jednym razie w swoich modelach. Listy, szczegóły i widoki grafów prezentują te same dane; wydarzenie nie jest kopiowane do kart na potrzeby grafu. Do rysowania, układu i interakcji grafu dopuszczono zewnętrzną bibliotekę JavaScript, przy zachowaniu własnego modelu, backendu i integracji Fetch. Ten podział pozwala wykorzystać gotowe narzędzie wizualizacji bez przenoszenia do niego reguł świata i autoryzacji. Zgoda prowadzącego jest odnotowana na podstawie oświadczenia autora projektu z 2026-11-13; nie jest niezależnym dowodem jej weryfikacji. Konkretna biblioteka pozostaje niewybrana; wybór i sprawdzenie jej możliwości należą do TODO 7.1. Zakres, źródło i warunki opisuje [ARCHITECTURE.md — Biblioteka grafowa](ARCHITECTURE.md#biblioteka-grafowa--ustalenia-011).
 
 Model pojęciowy z 0.6, zaktualizowany zgodnie z 0.7, znajduje się w [ARCHITECTURE.md](ARCHITECTURE.md#planowany-model-pojęciowy). Bieżącego Twórcę wskazuje jedyne członkostwo `WorldMember` z rolą `creator`; role Właścicieli nie zastępują tego przypisania. Uczestnicy wydarzeń wskazują istniejące karty, a miejsca i zależności wydarzeń są odrębnymi powiązaniami tych samych danych.
 
@@ -149,17 +188,17 @@ Ukończenie 0.7 oznacza spójny zapis ról, prywatności, macierzy, parametrów,
 ### Zatwierdzone decyzje
 
 - **Baza danych:** PostgreSQL jako relacyjna baza główna. Zbiory kart, relacji, wydarzeń, uczestnictwa i historii są ze sobą powiązane; grafy prezentują te dane. Dodatkowy silnik bazy grafowej nie jest potrzebny w zatwierdzonym zakresie.
-- **Identyfikacja:** stałe liczbowe `id` oraz osobny `type`. Docelowo ID jest generowane jako `BIGINT` i chronione kluczem głównym; nie jest zmieniane ani ponownie przydzielane po usunięciu. Wszystkie typy kart należą do wspólnego zbioru kart ze wspólną numeracją; odrębne zbiory, np. wydarzenia, mogą mieć własną numerację. Odwołanie poza jednym zbiorem musi określać także rodzaj obiektu. Prefiks w rodzaju `c42` może służyć prezentacji, bez dodatkowego obowiązkowego identyfikatora `fate_name`.
-- **Treść:** opisy przechowywane w rekordach bazy, w źródłowej postaci Markdown. Pliki służą ilustracjom i załącznikom, a rekord wskazuje konkretną wersję pliku. Markdown nie daje prawa do osadzania wykonywalnego HTML lub skryptów; sposób bezpiecznego renderowania zostanie dobrany podczas implementacji, bez wyboru nowej biblioteki w tym zadaniu.
-- **Niezmienność typu:** istniejąca karta postaci nie może zmienić typu. Powstaje nowa karta z nowym ID i innym typem, powiązana z poprzednią jako ten sam byt. Poprzednia karta zachowuje ID i typ; utworzenie nowej nie oznacza automatycznego scalenia ani przeniesienia pozostałych relacji.
-- **Oznaczenie tożsamości:** `10` jest zatwierdzonym kodem rodzaju relacji `same_as` — „są tym samym”. Nie jest wagą ani elementem uniwersalnej skali 0–10. Nowsza decyzja użytkownika zastępuje odmienne znaczenia dawnej skali w `myra.txt`, którego nie zmieniamy.
+- **Identyfikacja:** stałe liczbowe `id` oraz osobny `type`. Docelowo ID jest generowane jako `BIGINT` i chronione kluczem głównym; nie jest zmieniane ani ponownie przydzielane po usunięciu. Wszystkie typy kart należą do wspólnego zbioru kart ze wspólną numeracją; odrębne zbiory, np. wydarzenia, mogą mieć własną numerację. Odwołanie poza jednym zbiorem musi określać także rodzaj obiektu. Oddzielenie klucza od oznaczenia typu utrzymuje stałe odwołania niezależnie od sposobu prezentacji. Prefiks w rodzaju `c42` może służyć prezentacji, lecz nie jest kluczem rekordu; nie dodajemy dodatkowego obowiązkowego identyfikatora `fate_name`.
+- **Treść:** opisy przechowywane w rekordach bazy, w źródłowej postaci Markdown. Dzięki temu treść podlega wspólnemu zapisowi danych i historii; rekord nie wskazuje osobnego pliku z opisem. Pliki służą ilustracjom i załącznikom, a rekord wskazuje konkretną wersję pliku. Markdown nie daje prawa do osadzania wykonywalnego HTML lub skryptów; sposób bezpiecznego renderowania zostanie dobrany podczas implementacji modułu kart. Biblioteka renderująca Markdown nie została jeszcze wybrana.
+- **Niezmienność typu:** istniejąca karta postaci nie może zmienić typu. Powstaje nowa karta z nowym ID i innym typem, powiązana z poprzednią jako ten sam byt. Poprzednia karta zachowuje ID i typ, co utrzymuje znaczenie jej wcześniejszych powiązań i wersji historycznych. Utworzenie nowej karty nie oznacza automatycznego scalenia ani przeniesienia pozostałych relacji.
+- **Oznaczenie tożsamości:** `10` jest kodem rodzaju relacji `same_as` — „są tym samym”. Nie jest wagą ani elementem uniwersalnej skali 0–10. W WorldGraph obowiązuje ta konwencja; dawna skala w `myra.txt` oznaczała tożsamość przez `0`, a brak znaczącego połączenia przez `10`. Szkic pozostaje materiałem źródłowym i nie jest zmieniany.
 - **Usuwanie relacji:** usunięta bieżąca relacja znika przy obu końcach i w grafie. Jest to jedno powiązanie prezentowane w kilku miejscach; usunięcie go nie usuwa kart końcowych. Historia relacji pozostaje zachowana.
 - **Zachowanie danych:** na razie wszystkie skutecznie zapisane dane, logi i historyczne wersje plików pozostają na dyskach bez automatycznej daty wygaśnięcia. Usunięcie świata wycofuje jego bieżącą zawartość ze zwykłego dostępu, bez niszczenia zachowanych wersji i bez nadawania nowego dostępu do archiwum.
-- **Równoległy zapis:** wygrywa pierwszy poprawnie zatwierdzony zapis aktualnej wersji danego obiektu. Późniejsza próba zapisu oparta na nieaktualnej rewizji jest odrzucana jako konflikt (`409`), bez nadpisania pierwszego zapisu i bez automatycznego scalania. Niezapisana treść pozostaje dostępna autorowi do porównania i ponowienia po zapoznaniu się z aktualną wersją. Nie oznacza to wykonywania commitów Git przez aplikację. Zmiany niezależnych obiektów mogą zostać kolejno zapisane do wspólnej historii świata.
+- **Równoległy zapis:** wygrywa pierwszy poprawnie zatwierdzony zapis aktualnej wersji danego obiektu. Późniejsza próba zapisu oparta na nieaktualnej rewizji jest odrzucana jako konflikt (`409`), bez nadpisania pierwszego zapisu i bez automatycznego scalania. Chroni to przed cichą utratą cudzej zmiany, pozostawiając autorowi rozstrzygnięcie konfliktu. Niezapisana treść pozostaje dostępna autorowi do porównania i ponowienia po zapoznaniu się z aktualną wersją. Nie oznacza to wykonywania commitów Git przez aplikację. Zmiany niezależnych obiektów mogą zostać kolejno zapisane do wspólnej historii świata.
 
 ### Format karty zatwierdzony na podstawie MYRA
 
-Użytkownik sprawdził i zatwierdził poniższy format przed jego wprowadzeniem. Jest wspólny dla postaci, lokacji, frakcji, ras/gatunków i artefaktów. Na tym etapie nie dodajemy osobnych zestawów pól zależnych od typu.
+Poniższa tabela definiuje przyjęty format karty wspólny dla postaci, lokacji, frakcji, ras/gatunków i artefaktów. Jedna struktura pozwala prezentować te same karty w listach i grafach; ten format nie wprowadza osobnych zestawów pól zależnych od typu.
 
 | Pole | Format i obowiązkowość |
 |---|---|
@@ -211,7 +250,9 @@ Między tą samą parą A→B może istnieć kilka wpisów wpływu opisujących 
 
 ### Warunek ukończenia 0.8
 
-Format karty, katalog i reguły relacji, interpretacja `10` oraz osobny zapis wielokrotnych wpływów zostały potwierdzone przez użytkownika. Zapisano też zatwierdzone zasady identyfikacji, Markdown, niezmienności typu, usuwania, retencji i pierwszego poprawnego zapisu wygrywającego konflikt. Ukończenie 0.8 oznacza spójne ustalenia dokumentacyjne; nie tworzy tabel, formularzy ani działającego mechanizmu zapisu.
+Przyjęty model obejmuje opisany w tej sekcji format karty, katalog i reguły relacji, kod rodzaju `same_as = 10`, osobne wielokrotne wpisy wpływu, liczbowe ID z typem, Markdown w bazie, niezmienność typu, wycofywanie bieżącej treści z zachowaniem historii i odrzucanie zapisu nieaktualnej rewizji. Ukończenie 0.8 oznacza spójny zapis tych reguł; nie tworzy tabel, formularzy ani działającego mechanizmu zapisu.
+
+Weryfikacja przyszłej implementacji w [etapach 4–6 TODO](TODO.md#4-biblioteka-i-światy) musi objąć zapis i odczyt pól bez plików opisowych, stałość ID i typu, wymagane pola oraz dozwolone końce i kierunki relacji. Osobne próby mają sprawdzić wiele wpływów tej samej pary postaci, usunięcie powiązań przy obu końcach bez utraty historii oraz dwa zapisy tej samej rewizji: pierwszy skuteczny, drugi odrzucony jako 409 bez nadpisania. Bezpieczne renderowanie Markdown wymaga kontroli prób osadzenia HTML i skryptów. Wyniki i dowody realizacji zapisuje [checklista kryteriów](docs/REQUIREMENTS.md).
 
 ## Strony i nawigacja
 
@@ -327,7 +368,7 @@ Ukończenie 0.4 oznacza ustalenie zawartości, adresów, nawigacji i zachowania 
 | `UPDATE_LIST` | Wspólna historia zmian danych i plików świata w podstawowym MVP: zestawy zmian, wersje i porównanie zgodnie z 0.7. |
 | Dialogi | Funkcja odłożona poza pierwszą wersję. |
 
-Szkic stanowi odniesienie do celu produktu. Model pojęciowy 0.6 zaktualizowano zgodnie z 0.7–0.8 w ARCHITECTURE.md; macierz uprawnień, wymagania historii, format kart, reguły relacji i wpływu oraz skutki usuwania zapisano powyżej po wymaganym potwierdzeniu użytkownika. Nowsze decyzje mają pierwszeństwo przed odmiennymi zapisami szkicu, którego nie nadpisujemy. Kod rodzaju `same_as = 10` nie jest dawną wagą MYRA.
+Szkic `myra.txt` stanowi odniesienie do celu produktu. Normatywne reguły WorldGraph określają [role i uprawnienia](#role-prywatność-i-uprawnienia--ustalenia-07), [dane i zapis](#dane-i-zapis--ustalenia-08) oraz [model pojęciowy](ARCHITECTURE.md#planowany-model-pojęciowy). Gdy szkic zawiera inne oznaczenia lub szerszy zakres, obowiązują te zapisane reguły WorldGraph, a szkic pozostaje niezmieniony. W szczególności `same_as = 10` jest kodem rodzaju relacji, a nie dawną wagą MYRA; dialogi i ogólna skala wag nie należą do podstawowego MVP.
 
 ## Warunek ukończenia MVP
 

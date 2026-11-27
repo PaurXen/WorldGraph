@@ -107,6 +107,11 @@ h3 { margin-bottom: 12px; font-size: 15px; font-weight: 500; letter-spacing: -0.
 .back-to-top { margin-left: auto; font-size: 11px; white-space: nowrap; }
 .back-to-top span { margin-left: 12px; color: var(--accent); }
 
+.error-page { min-height: 55vh; padding-block: 72px 88px; }
+.error-code { margin-bottom: 24px; color: var(--accent); }
+.error-page h1 { max-width: 900px; font-size: clamp(40px, 6vw, 72px); letter-spacing: -1.5px; overflow-wrap: anywhere; }
+.error-message { max-width: 560px; margin-block: 24px 32px; color: var(--muted); line-height: 1.85; }
+
 @media (min-width: 1600px) {
     .hero { gap: 60px; }
 }

@@ -1,36 +1,8 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111713">
-    <meta name="description" content="WorldGraph — pomysł na uporządkowaną przestrzeń dla postaci, miejsc i historii twojego fikcyjnego świata. Poznaj demonstracyjny szablon projektu.">
-    <title>WorldGraph — wszystko jest połączone</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23111713'/%3E%3Cpath d='M11 27 20 11l9 16H11' fill='none' stroke='%23d3edab' stroke-width='2'/%3E%3Cg fill='%23d3edab'%3E%3Ccircle cx='20' cy='11' r='4'/%3E%3Ccircle cx='11' cy='27' r='4'/%3E%3Ccircle cx='29' cy='27' r='4'/%3E%3C/g%3E%3C/svg%3E">
-    <link rel="stylesheet" href="/assets/css/style.css">
-</head>
-<body id="top">
-    <a class="skip-link" href="#main">Przejdź do treści</a>
+<?php
 
-    <header class="site-header container">
-        <a class="brand" href="#top" aria-label="WorldGraph — strona główna">
-            <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <path d="M10 29 20 10l10 19H10Z" stroke="currentColor" stroke-width="1.5"/>
-                <circle cx="20" cy="10" r="4" fill="currentColor"/>
-                <circle cx="10" cy="29" r="4" fill="currentColor"/>
-                <circle cx="30" cy="29" r="4" fill="currentColor"/>
-            </svg>
-            <span>WorldGraph<span class="brand-dot">.</span></span>
-        </a>
+declare(strict_types=1);
 
-        <nav class="main-nav" aria-label="Główna nawigacja">
-            <a href="#idea">Idea projektu</a>
-            <a href="#world-preview">Podgląd świata <span aria-hidden="true">↗</span></a>
-        </nav>
-        <span class="template-label"><span class="status-dot" aria-hidden="true"></span> Szablon demonstracyjny</span>
-    </header>
-
-    <main id="main">
+?>
         <section class="hero container" aria-labelledby="hero-title">
             <div class="hero-copy">
                 <p class="eyebrow"><span class="small-star" aria-hidden="true">✳</span> Dla tych, którzy tworzą światy</p>
@@ -163,12 +135,3 @@
                 </article>
             </div>
         </section>
-    </main>
-
-    <footer class="site-footer container">
-        <a class="footer-brand" href="#top">WorldGraph<span class="brand-dot">.</span></a>
-        <p>Szablon demonstracyjny. Przedstawione postacie i powiązania są przykładowe.</p>
-        <a class="back-to-top" href="#top">Na początek <span aria-hidden="true">↑</span></a>
-    </footer>
-</body>
-</html>

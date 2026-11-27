@@ -1,15 +1,35 @@
 # ARCHITECTURE.md — WorldGraph
 
-> Dokument planowanej architektury aplikacji. Dostępny jest statyczny szablon strony startowej i lokalne środowisko Docker Compose; kod backendu nie został jeszcze rozpoczęty.
+> Dokument planowanej architektury aplikacji. Dostępny jest punkt wejścia PHP, własny router, przekazywanie tras przez Nginx, kontrolery strony głównej i błędów, wspólne renderowanie, layout z fragmentami nagłówka, nawigacji i stopki oraz testy w lokalnym środowisku Docker Compose. Treść strony startowej znajduje się w szablonie PHP; warstwy biznesowe pozostają do implementacji.
+
+## Spis treści
+
+- [Zakładany stos](#zakładany-stos)
+- [Biblioteka grafowa — ustalenia 0.11](#biblioteka-grafowa--ustalenia-011)
+- [Planowany przepływ](#planowany-przepływ)
+- [Planowany model pojęciowy](#planowany-model-pojęciowy)
+  - [Pojęcia](#pojęcia)
+  - [Własność i członkostwo](#własność-i-członkostwo)
+  - [Powiązania i liczności](#powiązania-i-liczności)
+  - [Izolacja i wspólne dane](#izolacja-i-wspólne-dane)
+  - [Zatwierdzone decyzje strukturalne — ustalenia 0.8](#zatwierdzone-decyzje-strukturalne--ustalenia-08)
+  - [Egzekwowanie uprawnień — ustalenia 0.7](#egzekwowanie-uprawnień--ustalenia-07)
+  - [Historia zmian i wersje w podstawowym MVP](#historia-zmian-i-wersje-w-podstawowym-mvp)
+  - [Powiązanie z widokami MYRA i zakresem MVP](#powiązanie-z-widokami-myra-i-zakresem-mvp)
+  - [Granice ustaleń 0.6–0.8](#granice-ustaleń-0608)
+- [Zasady projektowe](#zasady-projektowe)
+- [Status](#status)
 
 ## Zakładany stos
 - PHP (backend obiektowy), PostgreSQL, HTML/CSS, JavaScript.
 - Lokalne środowisko Docker Compose: Nginx → PHP 8.5-FPM (`pdo_pgsql`) → PostgreSQL 18.
-- Wariant A: dopuszczona zewnętrzna biblioteka JS do wizualizacji grafu; konkretny wybór pozostaje w 7.1.
+- Zewnętrzna biblioteka JavaScript do wizualizacji grafu, z własnym modelem danych i backendem; konkretny wybór pozostaje w 7.1.
 
 ## Biblioteka grafowa — ustalenia 0.11
 
-Decyzja projektowa: **wariant A**, zewnętrzna biblioteka JavaScript do wizualizacji grafu. Biblioteka działa w przeglądarce i odpowiada za rysowanie, stylowanie, rozmieszczenie elementów oraz interakcje, takie jak zaznaczanie, przesuwanie i przybliżanie. Nie zastępuje własnego modelu, backendu PHP, SQL, routingu, autoryzacji, CRUD, historii zmian ani kodu integracji przez Fetch.
+Przyjęto **zewnętrzną bibliotekę JavaScript do wizualizacji grafu z własnym modelem i backendem**. Biblioteka działa w przeglądarce i odpowiada za rysowanie, stylowanie, rozmieszczenie elementów oraz interakcje, takie jak zaznaczanie, przesuwanie i przybliżanie. Ten podział pozwala korzystać z gotowego mechanizmu prezentacji przy zachowaniu własnych reguł danych i dostępu. Nie wybrano pisania całego silnika wizualizacji od podstaw; model, backend PHP, SQL, routing, autoryzacja, CRUD, historia zmian i integracja przez Fetch pozostają kodem aplikacji.
+
+Dopuszczalność użycia biblioteki na WdPAI zapisano 2026-11-13 na podstawie oświadczenia autora projektu, że prowadzący ją potwierdził. Źródłem tej informacji jest oświadczenie autora, a nie niezależna weryfikacja u prowadzącego. Decyzja określa dozwolony zakres biblioteki; żadna konkretna biblioteka nie została jeszcze wybrana ani zainstalowana.
 
 Warunki wyboru i wdrożenia w etapie 7:
 
@@ -31,9 +51,19 @@ W 0.11 nie wybieramy konkretnej biblioteki, nie instalujemy zależności i nie d
 - `templates`: widoki HTML.
 - `public/assets`: statyczne pliki frontendu.
 
+W zadaniu 1.3 powstał `src/Core/Http/Router.php`, niezależny od superglobalnych zmiennych i wysyłania odpowiedzi. Rejestruje jawne metody oraz ścieżki statyczne lub regex, a wynik dopasowania zawiera funkcję obsługi, osobne parametry ścieżki i query oraz status i dozwolone metody. `public/index.php` odczytuje żądanie, korzysta z definicji w `config/routes.php`, ustawia status i wywołuje wybraną funkcję. Zasady dopasowania i polecenie testów opisuje [README — Routing](README.md#routing).
+
+W 1.4 Nginx przekazuje `/` bezpośrednio do punktu wejścia, a dla pozostałych adresów najpierw obsługuje istniejące pliki i katalogi. Gdy ich brakuje, wykonuje wewnętrzne przekazanie do `index.php` z zachowaniem oryginalnego URI, query i metody HTTP. Dlatego np. `OPTIONS /` rozstrzyga router, a niezarejestrowana trasa bez pliku otrzymuje PHP-owe 404. Ochrona ukrytych ścieżek i sprawdzanie istnienia skryptu PHP pozostają po stronie Nginx. Integrację sprawdza `tests/Integration/RoutingHttpTest.php` bez dodatkowych bibliotek i publicznych tras testowych.
+
+**Wspólne renderowanie PHP w bazowym kontrolerze** z zadań 1.5–1.7 korzysta z `src/Controller/BaseController.php` i `HomeController.php`. Wspólne miejsce wyboru, sprawdzania i buforowania szablonów ogranicza powtarzanie tej obsługi w kolejnych kontrolerach, a layout usuwa potrzebę kopiowania całego dokumentu HTML. Nie wydzielono osobnej klasy renderera ani nie dodano zewnętrznego silnika szablonów.
+
+Trasy wskazują `HomeController::index()`, który przekazuje tytuł i opis oraz wywołuje wspólne `render('home', $data, 'layouts/main')`. Renderer bazowego kontrolera wybiera widok i opcjonalny layout wyłącznie z `templates/`, sprawdza obie nazwy i rzeczywiste ścieżki przed wykonaniem oraz przekazuje tablicę `$data` w izolowanym zakresie bez `extract()`. Layout otrzymuje osobno `$content` z treścią widoku. Wynik jest emitowany dopiero po poprawnym wykonaniu obu szablonów; renderer sprząta bufory po wyjątku. PHP szablonów pozostaje zaufanym kodem, a kodowanie niezaufanych danych w HTML jest ich odpowiedzialnością. `templates/layouts/main.php` koduje metadane, zawiera strukturę dokumentu i dołącza stałymi ścieżkami fragmenty z `templates/partials/`. `templates/home.php` zawiera dotychczasowe sekcje strony i graf SVG, bez odczytu dawnego pliku HTML. Obsługę przechwyconych awarii opisuje zakres 1.8. Szczegóły i testy: [README — Kontrolery i widoki](README.md#kontrolery-i-widoki).
+
+**Obsługa błędów w punkcie wejścia ze wspólnym kontrolerem i widokiem** z zadania 1.8 wykorzystuje `ErrorController::show(int $status)` i `templates/errors/http.php` dla 400, 404, 405 oraz 500. Umieszczenie granicy obsługi wyjątków w `public/index.php` obejmuje autoloader, konfigurację tras i kontroler, bez wydzielania osobnej klasy obsługi żądań. Punkt wejścia buforuje wykonanie tych etapów. Wyniki routera bez funkcji obsługi trafiają do kontrolera błędów; 405 zachowuje `Allow`, a `HEAD` nie wysyła ciała. Przechwycony `Throwable` powoduje odrzucenie częściowego wyniku i nagłówków nieudanej odpowiedzi oraz 500 z `Cache-Control: no-store`. Gdy renderowanie błędu również zawiedzie, punkt wejścia zwraca stałą odpowiedź tekstową bez zależności od szablonów. Techniczny log zawiera klasę, nazwę pliku i linię, bez wiadomości wyjątku, stosu i danych żądania. Konfiguracja `docker/php/conf.d/errors.ini` ukrywa diagnostykę w odpowiedzi, włącza logowanie i wyłącza argumenty w stosach wyjątków; jest dołączana podczas budowania istniejącego obrazu PHP. To diagnostyka wykonania, odrębna od historii świata z etapu 4. Awarii uruchamiania PHP lub PHP-FPM nie obejmuje gwarancja wyrenderowania strony; odpowiedzi Nginx pozostają w jego konfiguracji. Polecenia i ograniczenia: [README — Błędy i logi](README.md#błędy-i-logi).
+
 ## Planowany model pojęciowy
 
-Ustalenia punktu 0.6 TODO opisują znaczenie danych, ich powiązania i podstawowe zasady. Punkt 0.7 aktualizuje model o zatwierdzone role, trzy poziomy prywatności, komentarze i historię zmian w podstawowym MVP. W 0.8 użytkownik zatwierdził decyzje o identyfikacji, formacie kart, relacjach, wpływie postaci, przechowywaniu treści i zachowaniu zmian. Jest to podstawa późniejszego projektu bazy i klas; nie stanowi jeszcze schematu SQL ani implementacji backendu. Kanoniczna macierz ról i katalog uprawnień znajdują się w [PROJECT.md — Role, prywatność i uprawnienia](PROJECT.md#role-prywatność-i-uprawnienia--ustalenia-07), a formaty danych i reguły 0.8 w sekcji danych i zapisu tego samego dokumentu.
+Model pojęciowy określa znaczenie danych i ich powiązania oraz uwzględnia role, trzy poziomy prywatności, komentarze i historię zmian w podstawowym MVP. Kanoniczna macierz ról i katalog uprawnień znajdują się w [PROJECT.md — Role, prywatność i uprawnienia](PROJECT.md#role-prywatność-i-uprawnienia--ustalenia-07), a formaty kart, reguły relacji i wpływu postaci, identyfikacja, przechowywanie treści oraz zachowanie zmian w [PROJECT.md — Dane i zapis](PROJECT.md#dane-i-zapis--ustalenia-08). Te ustalenia z punktów 0.6–0.8 TODO są podstawą późniejszego projektu bazy i klas; nie stanowią schematu SQL ani implementacji backendu.
 
 ### Pojęcia
 
@@ -117,13 +147,13 @@ erDiagram
 - Główne opisy są zapisami Markdown przechowywanymi w rekordach bazy. Pliki służą ilustracjom i załącznikom, z metadanymi i odwołaniem do określonej wersji w bazie. Źródłowy Markdown jest wersjonowany razem z pozostałymi danymi. Renderowanie ma zachować kontrolę dostępu i bezpieczne wyjście; surowy HTML i skrypty nie są dopuszczane. Wybór mechanizmu renderowania należy do implementacji, bez dodawania teraz bibliotek.
 - Zatwierdzony format karty z MYRA obejmuje systemowe liczbowe ID, świat, niezmienny typ i rewizję oraz wymaganą, nieunikalną nazwę. Opcjonalna treść obejmuje aliasy z kontekstem lub informacją, kto nadał nazwę, charakterystykę i opis w Markdown oraz listę celów w Markdown; dotychczasowe MVP dodaje opcjonalny krótki opis, tagi i wersjonowane ilustracje. Nie dodajemy drugiego unikalnego `fate_name` ani niezatwierdzonych zestawów pól zależnych od typu. Walidacja rozróżnia wartości systemowe i edytowalne, tekst i listy, usuwa zbędne białe znaki przy nazwach oraz odrzuca pustą wymaganą nazwę; szczegóły formatu są w PROJECT.md.
 - Typ istniejącej karty jest niezmienny. Gdy autor potrzebuje innego typu reprezentacji, tworzy nową kartę z nowym ID, pozostawiając starą kartę i jej typ. Nowa karta jest łączona z poprzednią symetryczną relacją `same_as` oznaczoną kodem rodzaju `10`. Utworzenie karty i tego powiązania stanowi jeden logiczny zapis z historią. Nie oznacza to automatycznego scalenia rekordów, przeniesienia ich powiązań ani zmiany typu starej karty.
-- `10` jest kodem rodzaju relacji `same_as`, nie wagą. Nowsze zatwierdzone znaczenie użytkownika ma pierwszeństwo przed szkicem MYRA, gdzie `0` oznacza tożsamość, a `10` brak znaczącego połączenia; szkicu nie zmieniamy. Nie wprowadzamy ogólnej skali wag 0–10 ani nie nadajemy bez potrzeby kodów liczbowych pozostałym rodzajom relacji.
+- `10` jest kodem rodzaju relacji `same_as` oznaczającej ten sam byt, nie wagą. Ta reguła aplikacji zastępuje dawną skalę szkicu `myra.txt`, gdzie `0` oznacza tożsamość, a `10` brak znaczącego połączenia; plik szkicu pozostaje niezmieniony. Nie wprowadzamy ogólnej skali wag 0–10 ani nie nadajemy bez potrzeby kodów liczbowych pozostałym rodzajom relacji.
 - Początkowe relacje skierowane to: `belongs_to` (postać → frakcja), `is_of_species` (postać → rasa/gatunek), `located_in` (postać lub artefakt → lokacja) i `part_of` (lokacja → lokacja). `allied_with` i `hostile_to` są symetryczne między kartami postaci lub frakcji, a `same_as` jest symetryczne między dowolnymi dwoma różnymi kartami, także różnych typów. Wszystkie końce należą do jednego świata; relacje rekordu do samego siebie są niedozwolone. Dla danego rodzaju, pary i kierunku istnieje najwyżej jedno bieżące powiązanie; odwrócona kolejność symetrycznej relacji nie tworzy nowej relacji. Nie dopisujemy automatycznego scalania rodzajów relacji, rozstrzygania sojuszu i wrogości ani przechodniego domykania `same_as`.
 - Wpływ postaci jest odrębnym zapisem `Influence` z istniejącymi kartami postaci jako źródłem i celem oraz opisem kontekstu. Ta sama para może mieć kilka wpływów dotyczących różnych działań lub kontekstów; kierunek A → B nie oznacza wpływu B → A. Nie wprowadzamy obowiązkowej wagi liczbowej. Każda zmiana wpływu podlega jego własnym uprawnieniom i wspólnej historii świata.
 - Usunięcie bieżącej relacji usuwa ją z widoku obu końców. Usunięcie karty wycofuje wszystkie jej przychodzące i wychodzące relacje oraz wpływy z bieżących danych, bez usuwania kart po drugiej stronie. Odłącza kartę od uczestnictwa i miejsc wydarzeń, pozostawiając same wydarzenia. Komentarze i ilustracje usuniętego kontekstu przestają występować w bieżących widokach, lecz ich dane i historyczne pliki są zachowane. Operacja wymaga praw do wszystkich swoich skutków; brak potrzebnego uprawnienia oznacza odrzucenie całego zapisu. Stan przed operacją oraz zmiany wszystkich dotkniętych obiektów pozostają w jednym zestawie historii.
 - Na razie zachowujemy wszystkie zapisane dane, historyczne wersje i pliki na dyskach, bez terminu automatycznego usunięcia. Usunięcie oznacza wycofanie z bieżącego użycia; nie uruchamia fizycznego czyszczenia archiwum. Usunięty świat nie jest dostępny przez zwykłe widoki i adresy bieżących danych. Zachowana historia i pliki nie stają się publiczne; nadal wymagają `history.read`, właściwych praw do świata i kontekstu oraz administracyjnych ograniczeń wpisów. Zachowanie danych nie wprowadza funkcji przywracania.
 
-Użytkownik sprawdził i zatwierdził propozycje formatu kart, katalogu i reguł relacji oraz odrębnego zapisu wielokrotnego wpływu postaci przed ich wprowadzeniem do ustaleń 0.8. PROJECT.md pozostaje źródłem szczegółowych formatów; ta sekcja opisuje ich znaczenie i zasady egzekwowania.
+Szczegółowy format kart, katalog i reguły relacji oraz odrębny zapis wielokrotnego wpływu postaci określa [PROJECT.md — Dane i zapis](PROJECT.md#dane-i-zapis--ustalenia-08). Ta sekcja opisuje ich znaczenie i zasady egzekwowania; weryfikacja przyszłej implementacji musi objąć wskazane ograniczenia typów, identyfikatorów, relacji i izolacji światów.
 
 ### Egzekwowanie uprawnień — ustalenia 0.7
 
@@ -178,4 +208,4 @@ Ukończenie 0.8 oznacza zapisanie i sprawdzenie zatwierdzonych formatów i regu�
 - Na mobile graf powinien mieć alternatywną listę relacji.
 
 ## Status
-Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. `public/index.html` i `public/assets/css/style.css` tworzą responsywny szablon strony startowej z przykładowym grafem SVG. Nie ma jeszcze klas backendu, API, SQL ani schematu bazy aplikacji.
+Konfiguracja kontenerów znajduje się w `compose.yaml` i `docker/`; instrukcja uruchomienia jest w `README.md`. Nginx kieruje trasy aplikacji do `public/index.php`, który podłącza autoloader Composera i router. Definicje w `config/routes.php` kierują GET/HEAD dla `/`, `/index.php` i `/index.html` do `HomeController`. Wspólny renderer `BaseController` składa `templates/home.php` z layoutem `templates/layouts/main.php` oraz fragmentami nagłówka, nawigacji i stopki. Dawny `public/index.html` został zastąpiony tym podziałem; jego adres jest aliasem obsługiwanym przez PHP. Style nadal udostępnia bezpośrednio Nginx z `public/assets/css/style.css`; treść i przykładowy graf SVG pozostają statyczne. Kontroler błędów i zewnętrzne buforowanie punktu wejścia zapewniają kontrolowane odpowiedzi aplikacji oraz obsługę przechwyconych wyjątków z tekstową odpowiedzią awaryjną. Dostępne są testy routera, kontrolerów, integracji HTTP i odizolowane testy awarii; datowane wyniki i ograniczenia weryfikacji opisuje README. Nie ma jeszcze warstw biznesowych, API, SQL ani schematu bazy aplikacji.
